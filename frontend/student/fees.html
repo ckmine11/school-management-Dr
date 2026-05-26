@@ -1,0 +1,69 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Fees | Student</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-gray-50">
+<div class="flex h-screen overflow-hidden">
+  <div id="sidebar"></div>
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <div id="topbar"></div>
+    <main class="flex-1 overflow-y-auto p-6">
+      <div id="feeTableWrap" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-5 py-4 border-b"><h2 class="font-bold text-gray-800">My Fee Records</h2></div>
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50 border-b"><tr>
+              <th class="text-left px-4 py-3 text-gray-500">Receipt</th>
+              <th class="text-left px-4 py-3 text-gray-500">Type</th>
+              <th class="text-left px-4 py-3 text-gray-500">Amount</th>
+              <th class="text-left px-4 py-3 text-gray-500">Due Date</th>
+              <th class="text-left px-4 py-3 text-gray-500">Month</th>
+              <th class="text-left px-4 py-3 text-gray-500">Status</th>
+            </tr></thead>
+            <tbody id="feeTable" class="divide-y divide-gray-100">
+              <tr><td colspan="6" class="text-center py-8 text-gray-400"><i class="fas fa-spinner fa-spin text-xl"></i></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../js/api.js?v=10"></script>
+<script src="../js/auth.js?v=10"></script>
+<script src="../js/layout.js?v=10"></script>
+<script>
+  const user = Auth.requireAuth(['student']);
+  buildLayout('My Fees', 'student');
+
+  async function loadFees() {
+    const studentId = user?.roleId;
+    if (!studentId) { showToast('Student profile not linked', 'error'); return; }
+    try {
+      const res = await api.get('/fees', { studentId });
+      const tb = document.getElementById('feeTable');
+      const statusBadge = { paid:'badge-green', unpaid:'badge-red', partial:'badge-yellow' };
+      if (!res.data.length) { tb.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">No fee records</td></tr>'; return; }
+      tb.innerHTML = res.data.map(f => `
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-3 text-xs font-mono text-gray-500">${f.receiptNo}</td>
+          <td class="px-4 py-3 text-sm capitalize">${f.feeType}</td>
+          <td class="px-4 py-3 font-semibold text-sm">${formatCurrency(f.amount)}</td>
+          <td class="px-4 py-3 text-sm text-gray-600">${formatDate(f.dueDate)}</td>
+          <td class="px-4 py-3 text-sm">${f.month || '-'} ${f.year || ''}</td>
+          <td class="px-4 py-3"><span class="badge ${statusBadge[f.status]}">${f.status}</span></td>
+        </tr>`).join('');
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+  loadFees();
+  window.__pageInlineScriptExecuted = true;
+</script>
+<script src="../js/inline-fallback.js?v=1"></script>
+</body>
+</html>
+

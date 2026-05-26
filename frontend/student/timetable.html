@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Timetable | School Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-gray-50">
+<div class="flex h-screen overflow-hidden">
+  <div id="sidebar"></div>
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <div id="topbar"></div>
+    <main class="flex-1 overflow-y-auto p-6">
+
+      <div id="ttGrid">
+        <div class="text-center py-10 text-gray-400"><i class="fas fa-spinner fa-spin text-2xl"></i></div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script src="../js/api.js?v=10"></script>
+<script src="../js/auth.js?v=10"></script>
+<script src="../js/layout.js?v=10"></script>
+<script>
+  const user = Auth.requireAuth(['student']);
+  buildLayout('My Timetable', 'student');
+
+  const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  async function init() {
+    const studentId = user?.roleId;
+    if (!studentId) {
+      document.getElementById('ttGrid').innerHTML =
+        '<div class="bg-red-50 border border-red-200 rounded-2xl p-6 text-center text-red-600">Student profile not linked to this account.</div>';
+      return;
+    }
+
+    try {
+      // Get own class/section
+      const sRes = await api.get(`/students/${studentId}`);
+      const student = sRes.data;
+      const cls = student.class;
+      const section = student.section;
+
+      const res = await api.get('/timetable', { class: cls, section });
+      renderGrid(res.data, cls, section, student.name);
+    } catch (err) {
+      document.getElementById('ttGrid').innerHTML =
+        `<div class="bg-red-50 border border-red-200 rounded-2xl p-6 text-center text-red-600">${err.message}</div>`;
+    }
+  }
+
+  function renderGrid(data, cls, section, name) {
+    const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+    const grid = document.getElementById('ttGrid');
+
+    grid.innerHTML = `
+      <div class="bg-gradient-to-r from-indigo-600 to-purple-500 rounded-2xl px-5 py-4 mb-5 text-white flex items-center justify-between">
+        <div>
+          <p class="text-indigo-200 text-xs mb-1">Your Class</p>
+          <p class="font-bold text-lg">${cls} — Section ${section}</p>
+        </div>
+        <div class="text-right">
+          <p class="text-indigo-200 text-xs mb-1">Today</p>
+          <p class="font-semibold">${today}</p>
+        </div>
+      </div>` +
+      DAYS.map(day => {
+        const periods = data[day] || [];
+        const isToday = day === today;
+        return `
+          <div class="bg-white rounded-2xl shadow-sm border ${isToday ? 'border-indigo-300 ring-2 ring-indigo-100' : 'border-gray-100'} overflow-hidden mb-4">
+            <div class="px-5 py-3 border-b ${isToday ? 'bg-indigo-50' : 'bg-gray-50'} flex items-center gap-2">
+              <span class="font-semibold ${isToday ? 'text-indigo-700' : 'text-gray-700'}">${day}</span>
+              ${isToday ? '<span class="badge badge-blue text-xs">Today</span>' : ''}
+              <span class="ml-auto text-xs text-gray-400">${periods.length} period${periods.length !== 1 ? 's' : ''}</span>
+            </div>
+            <div class="overflow-x-auto">
+              ${periods.length === 0
+                ? '<p class="text-center text-gray-400 text-sm py-4">No periods scheduled</p>'
+                : `<table class="w-full text-sm">
+                    <thead class="bg-gray-50 text-xs text-gray-500">
+                      <tr>
+                        <th class="text-left px-4 py-2 w-16">Period</th>
+                        <th class="text-left px-4 py-2">Time</th>
+                        <th class="text-left px-4 py-2">Subject</th>
+                        <th class="text-left px-4 py-2">Teacher</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                      ${periods.map(p => `
+                        <tr class="hover:bg-gray-50">
+                          <td class="px-4 py-2.5 font-semibold text-indigo-600">P${p.periodNo}</td>
+                          <td class="px-4 py-2.5 text-gray-600">${p.startTime || '--:--'} – ${p.endTime || '--:--'}</td>
+                          <td class="px-4 py-2.5 font-medium">${p.subject}</td>
+                          <td class="px-4 py-2.5 text-gray-500">${p.teacherName || '-'}</td>
+                        </tr>`).join('')}
+                    </tbody>
+                  </table>`}
+            </div>
+          </div>`;
+      }).join('');
+  }
+
+  init();
+  window.__pageInlineScriptExecuted = true;
+</script>
+<script src="../js/inline-fallback.js?v=1"></script>
+</body>
+</html>

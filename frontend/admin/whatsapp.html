@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WhatsApp Setup | School Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-gray-50">
+<div class="flex h-screen overflow-hidden">
+  <div id="sidebar"></div>
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <div id="topbar"></div>
+    <main class="flex-1 overflow-y-auto p-6">
+
+      <div class="max-w-2xl mx-auto">
+
+        <!-- Status Card -->
+        <div id="statusCard" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-5">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="font-bold text-lg text-gray-800"><i class="fab fa-whatsapp text-green-500 mr-2"></i>WhatsApp Status</h2>
+            <button onclick="loadStatus()" class="btn btn-secondary !py-1.5 !px-3 text-xs"><i class="fas fa-sync-alt"></i> Refresh</button>
+          </div>
+          <div id="statusContent" class="text-center py-6 text-gray-400"><i class="fas fa-spinner fa-spin text-2xl"></i></div>
+        </div>
+
+        <!-- QR Card -->
+        <div id="qrCard" class="hidden bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-5">
+          <h2 class="font-bold text-lg text-gray-800 mb-2"><i class="fas fa-qrcode text-blue-500 mr-2"></i>Scan QR Code</h2>
+          <p class="text-sm text-gray-500 mb-5">Apne phone mein WhatsApp kholo → <strong>Linked Devices</strong> → <strong>Link a Device</strong> → QR scan karo</p>
+          <div class="flex justify-center mb-4">
+            <img id="qrImage" src="" alt="QR Code" class="rounded-xl border border-gray-200 shadow-sm" style="width:260px;height:260px;">
+          </div>
+          <p class="text-xs text-center text-gray-400">QR code 60 seconds mein expire ho jaata hai — page refresh karo agar expire ho jaaye</p>
+        </div>
+
+        <!-- Send Test Message -->
+        <div id="sendCard" class="hidden bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-5">
+          <h2 class="font-bold text-lg text-gray-800 mb-4"><i class="fas fa-paper-plane text-green-500 mr-2"></i>Test Message Bhejo</h2>
+          <div class="space-y-3">
+            <div>
+              <label class="label">Phone Number (WhatsApp)</label>
+              <input type="tel" id="testPhone" class="input" placeholder="e.g. 9876543210">
+            </div>
+            <div>
+              <label class="label">Message</label>
+              <textarea id="testMessage" class="input h-24 resize-none" placeholder="Test message...">Bright Future School: This is a test message from the school management system.</textarea>
+            </div>
+            <button onclick="sendTest()" class="btn btn-primary w-full justify-center"><i class="fab fa-whatsapp"></i> Send WhatsApp</button>
+          </div>
+        </div>
+
+        <!-- Queue Status Card -->
+        <div id="queueCard" class="hidden bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-5">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="font-bold text-lg text-gray-800"><i class="fas fa-layer-group text-indigo-500 mr-2"></i>Message Queue</h2>
+            <div class="flex gap-2">
+              <button onclick="loadQueue()" class="btn btn-secondary !py-1.5 !px-3 text-xs"><i class="fas fa-sync-alt"></i> Refresh</button>
+              <button onclick="retryFailed()" id="retryBtn" class="hidden btn btn-secondary !py-1.5 !px-3 text-xs text-red-600"><i class="fas fa-redo"></i> Retry Failed</button>
+            </div>
+          </div>
+          <div id="queueStats" class="grid grid-cols-3 sm:grid-cols-3 gap-3 mb-3"></div>
+          <div id="queueList" class="space-y-1 max-h-48 overflow-y-auto text-xs"></div>
+        </div>
+
+        <!-- Broadcast Card -->
+        <div id="broadcastCard" class="hidden bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <h2 class="font-bold text-lg text-gray-800 mb-4"><i class="fas fa-broadcast-tower text-purple-500 mr-2"></i>Broadcast Message</h2>
+          <p class="text-sm text-gray-500 mb-4">Ek message sabko ek saath bhejo (parents, teachers, students)</p>
+          <div class="space-y-3">
+            <div>
+              <label class="label">Message</label>
+              <textarea id="broadcastMsg" class="input h-28 resize-none" placeholder="School notice ya announcement..."></textarea>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <label class="flex items-center gap-2 text-sm cursor-pointer p-3 bg-blue-50 rounded-xl border border-blue-100">
+                <input type="checkbox" id="sendParents" checked class="accent-blue-600"> Parents
+              </label>
+              <label class="flex items-center gap-2 text-sm cursor-pointer p-3 bg-green-50 rounded-xl border border-green-100">
+                <input type="checkbox" id="sendTeachers" checked class="accent-green-600"> Teachers
+              </label>
+              <label class="flex items-center gap-2 text-sm cursor-pointer p-3 bg-purple-50 rounded-xl border border-purple-100">
+                <input type="checkbox" id="sendStudents" class="accent-purple-600"> Students
+              </label>
+            </div>
+            <button onclick="sendBroadcast()" id="broadcastBtn" class="btn btn-primary w-full justify-center"><i class="fas fa-broadcast-tower"></i> Send Broadcast</button>
+          </div>
+          <div id="broadcastResult" class="hidden mt-4"></div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="../js/api.js?v=10"></script>
+<script src="../js/auth.js?v=10"></script>
+<script src="../js/layout.js?v=10"></script>
+<script>
+  Auth.requireAuth(['admin']);
+  buildLayout('WhatsApp Setup', 'admin');
+
+  const STATUS_LABELS = {
+    disconnected: { text: 'Not Connected', color: 'text-red-600', bg: 'bg-red-50', icon: 'fa-times-circle', hint: 'Click "Connect WhatsApp" to start.' },
+    initializing: { text: 'Starting...', color: 'text-yellow-600', bg: 'bg-yellow-50', icon: 'fa-spinner fa-spin', hint: 'Please wait, initializing...' },
+    loading: { text: 'Loading...', color: 'text-yellow-600', bg: 'bg-yellow-50', icon: 'fa-spinner fa-spin', hint: 'Loading WhatsApp...' },
+    qr_ready: { text: 'Scan QR Code', color: 'text-blue-600', bg: 'bg-blue-50', icon: 'fa-qrcode', hint: 'QR ready — scan with your phone.' },
+    authenticated: { text: 'Authenticated', color: 'text-teal-600', bg: 'bg-teal-50', icon: 'fa-check-circle', hint: 'Authenticated, loading...' },
+    ready: { text: 'Connected ✓', color: 'text-green-600', bg: 'bg-green-50', icon: 'fa-check-circle', hint: 'WhatsApp is connected and ready.' },
+    error: { text: 'Error', color: 'text-red-600', bg: 'bg-red-50', icon: 'fa-exclamation-circle', hint: 'Something went wrong. Try reconnecting.' },
+  };
+
+  let pollTimer = null;
+
+  async function loadStatus() {
+    try {
+      const res = await api.get('/whatsapp/status');
+      const { status, isReady, hasQR, connectedNumber } = res.data;
+      const info = STATUS_LABELS[status] || STATUS_LABELS.disconnected;
+
+      document.getElementById('statusContent').innerHTML = `
+        <div class="flex flex-col items-center gap-3">
+          <div class="w-16 h-16 ${info.bg} rounded-full flex items-center justify-center">
+            <i class="fas ${info.icon} ${info.color} text-2xl"></i>
+          </div>
+          <div class="text-center">
+            <p class="font-bold text-gray-800 text-lg">${info.text}</p>
+            <p class="text-sm text-gray-500 mt-1">${info.hint}</p>
+            ${connectedNumber ? `<p class="text-xs text-green-600 mt-1 font-mono">+${connectedNumber}</p>` : ''}
+          </div>
+          <div class="flex gap-2 mt-2 flex-wrap justify-center">
+            ${!isReady && status !== 'initializing' && status !== 'loading' && status !== 'authenticated'
+              ? '<button onclick="startWA()" class="btn btn-primary !py-2 !px-4"><i class="fab fa-whatsapp"></i> Connect WhatsApp</button>' : ''}
+            ${isReady ? '<button onclick="logoutWA()" class="btn btn-secondary !py-2 !px-4"><i class="fas fa-sign-out-alt"></i> Disconnect</button>' : ''}
+          </div>
+        </div>`;
+
+      // Show/hide cards
+      document.getElementById('qrCard').classList.toggle('hidden', !hasQR);
+      document.getElementById('sendCard').classList.toggle('hidden', !isReady);
+      document.getElementById('broadcastCard').classList.toggle('hidden', !isReady);
+      document.getElementById('queueCard').classList.toggle('hidden', !isReady);
+
+      if (hasQR) loadQR();
+      if (isReady) loadQueue();
+
+      // Auto-poll when connecting
+      clearTimeout(pollTimer);
+      if (['initializing', 'loading', 'qr_ready', 'authenticated'].includes(status)) {
+        pollTimer = setTimeout(loadStatus, 3000);
+      }
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }
+
+  async function loadQR() {
+    try {
+      const res = await api.get('/whatsapp/qr');
+      if (res.qr) {
+        document.getElementById('qrImage').src = res.qr;
+        document.getElementById('qrCard').classList.remove('hidden');
+      }
+    } catch {}
+  }
+
+  async function startWA() {
+    try {
+      await api.post('/whatsapp/init', {});
+      showToast('WhatsApp starting... QR code will appear in a moment', 'success');
+      setTimeout(loadStatus, 3000);
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  async function logoutWA() {
+    if (!confirm('WhatsApp se disconnect karein?')) return;
+    try {
+      await api.post('/whatsapp/logout', {});
+      showToast('Disconnected from WhatsApp', 'success');
+      loadStatus();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  async function sendTest() {
+    const phone = document.getElementById('testPhone').value.trim();
+    const message = document.getElementById('testMessage').value.trim();
+    if (!phone || !message) return showToast('Phone aur message required hai', 'error');
+    try {
+      await api.post('/whatsapp/send', { phone, message });
+      showToast('Message sent!', 'success');
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  async function sendBroadcast() {
+    const message = document.getElementById('broadcastMsg').value.trim();
+    if (!message) return showToast('Message likho', 'error');
+
+    const sendParents = document.getElementById('sendParents').checked;
+    const sendTeachers = document.getElementById('sendTeachers').checked;
+    const sendStudents = document.getElementById('sendStudents').checked;
+
+    if (!sendParents && !sendTeachers && !sendStudents) {
+      return showToast('Kam se kam ek group select karo', 'error');
+    }
+
+    const btn = document.getElementById('broadcastBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+
+    try {
+      const numbers = new Set();
+
+      if (sendParents || sendStudents) {
+        const students = await api.get('/students', { limit: 500 });
+        for (const s of students.data) {
+          if (sendParents && s.parentPhone) numbers.add(s.parentPhone);
+          if (sendStudents && s.phone) numbers.add(s.phone);
+        }
+      }
+      if (sendTeachers) {
+        const teachers = await api.get('/teachers', { limit: 500 });
+        for (const t of teachers.data) {
+          if (t.phone) numbers.add(t.phone);
+        }
+      }
+
+      const numArray = [...numbers].filter(Boolean);
+      if (!numArray.length) {
+        showToast('Koi phone number nahi mila database mein', 'error');
+        return;
+      }
+
+      const res = await api.post('/whatsapp/send-bulk', { numbers: numArray, message });
+      const queued = res.data?.queued ?? numArray.length;
+
+      document.getElementById('broadcastResult').classList.remove('hidden');
+      document.getElementById('broadcastResult').innerHTML = `
+        <div class="p-4 bg-blue-50 rounded-xl border border-blue-200">
+          <p class="font-semibold text-blue-800"><i class="fas fa-check-circle mr-1"></i>Broadcast queued!</p>
+          <p class="text-sm text-blue-700 mt-1">${queued} messages queued — delivery ho raha hai background mein.</p>
+          <p class="text-xs text-blue-500 mt-1">Queue status: <a href="#" onclick="loadQueue()" class="underline">Refresh</a></p>
+        </div>`;
+      showToast(`${queued} messages queued for delivery`, 'success');
+      setTimeout(loadQueue, 3000);
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-broadcast-tower"></i> Send Broadcast';
+    }
+  }
+
+  async function loadQueue() {
+    try {
+      const res = await api.get('/whatsapp/queue');
+      const { stats, recent } = res.data;
+      document.getElementById('queueCard').classList.remove('hidden');
+
+      const statColor = { pending: 'yellow', sent: 'green', failed: 'red' };
+      document.getElementById('queueStats').innerHTML = [
+        ['pending', 'Pending', stats.pending],
+        ['sent', 'Sent', stats.sent],
+        ['failed', 'Failed', stats.failed]
+      ].map(([key, label, val]) => `
+        <div class="p-3 bg-${statColor[key]}-50 rounded-xl border border-${statColor[key]}-100 text-center">
+          <div class="text-xl font-bold text-${statColor[key]}-700">${val}</div>
+          <div class="text-xs text-${statColor[key]}-600">${label}</div>
+        </div>`).join('');
+
+      document.getElementById('retryBtn').classList.toggle('hidden', stats.failed === 0);
+
+      document.getElementById('queueList').innerHTML = recent.length === 0
+        ? '<p class="text-gray-400 text-center py-2">No messages in queue</p>'
+        : recent.map(m => {
+            const color = { sent: 'green', failed: 'red', pending: 'yellow', processing: 'blue' }[m.status] || 'gray';
+            return `<div class="flex items-center justify-between px-2 py-1 bg-gray-50 rounded">
+              <span class="text-gray-600">${m.phone}</span>
+              <span class="px-2 py-0.5 rounded-full bg-${color}-100 text-${color}-700">${m.status}</span>
+            </div>`;
+          }).join('');
+    } catch {}
+  }
+
+  async function retryFailed() {
+    try {
+      const res = await api.post('/whatsapp/queue/retry', {});
+      showToast(res.message, 'success');
+      loadQueue();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  loadStatus();
+  window.__pageInlineScriptExecuted = true;
+</script>
+<script src="../js/inline-fallback.js?v=1"></script>
+</body>
+</html>

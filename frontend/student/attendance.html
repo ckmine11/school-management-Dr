@@ -1,0 +1,94 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Attendance | Student</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-gray-50">
+<div class="flex h-screen overflow-hidden">
+  <div id="sidebar"></div>
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <div id="topbar"></div>
+    <main class="flex-1 overflow-y-auto p-6">
+      <div class="flex gap-3 mb-5">
+        <input type="number" id="month" class="input w-20" min="1" max="12">
+        <input type="number" id="year" class="input w-24">
+        <button onclick="loadReport()" class="btn btn-primary"><i class="fas fa-search"></i> View</button>
+      </div>
+      <div id="summaryCards" class="grid grid-cols-4 gap-4 mb-5 hidden">
+        <div class="bg-white rounded-2xl p-4 text-center shadow-sm border border-gray-100">
+          <div class="text-3xl font-bold text-gray-800" id="s-total">-</div><div class="text-xs text-gray-500 mt-1">Total Days</div>
+        </div>
+        <div class="bg-green-50 rounded-2xl p-4 text-center shadow-sm">
+          <div class="text-3xl font-bold text-green-600" id="s-present">-</div><div class="text-xs text-gray-500 mt-1">Present</div>
+        </div>
+        <div class="bg-red-50 rounded-2xl p-4 text-center shadow-sm">
+          <div class="text-3xl font-bold text-red-500" id="s-absent">-</div><div class="text-xs text-gray-500 mt-1">Absent</div>
+        </div>
+        <div class="bg-blue-50 rounded-2xl p-4 text-center shadow-sm">
+          <div class="text-3xl font-bold text-blue-600" id="s-pct">-</div><div class="text-xs text-gray-500 mt-1">Attendance %</div>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50 border-b"><tr>
+              <th class="text-left px-4 py-3 text-gray-500">Date</th>
+              <th class="text-left px-4 py-3 text-gray-500">Day</th>
+              <th class="text-left px-4 py-3 text-gray-500">Status</th>
+              <th class="text-left px-4 py-3 text-gray-500">Remarks</th>
+            </tr></thead>
+            <tbody id="attTable" class="divide-y divide-gray-100">
+              <tr><td colspan="4" class="text-center py-8 text-gray-400">Select month and view</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../js/api.js?v=10"></script>
+<script src="../js/auth.js?v=10"></script>
+<script src="../js/layout.js?v=10"></script>
+<script>
+  const user = Auth.requireAuth(['student']);
+  buildLayout('My Attendance', 'student');
+  document.getElementById('month').value = new Date().getMonth() + 1;
+  document.getElementById('year').value = new Date().getFullYear();
+
+  async function loadReport() {
+    // We need the student's MongoDB _id which is in roleId
+    const studentId = user?.roleId;
+    if (!studentId) return showToast('Student profile not linked', 'error');
+    const month = document.getElementById('month').value;
+    const year = document.getElementById('year').value;
+    try {
+      const res = await api.get(`/attendance/report/${studentId}`, { month, year });
+      const s = res.summary;
+      document.getElementById('summaryCards').classList.remove('hidden');
+      document.getElementById('s-total').textContent = s.total;
+      document.getElementById('s-present').textContent = s.present;
+      document.getElementById('s-absent').textContent = s.absent;
+      document.getElementById('s-pct').textContent = s.percentage + '%';
+      const statusBadge = { present:'badge-green', absent:'badge-red', late:'badge-yellow', holiday:'badge-blue' };
+      const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      document.getElementById('attTable').innerHTML = res.data.map(r => `
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-2 text-sm">${formatDate(r.date)}</td>
+          <td class="px-4 py-2 text-sm text-gray-500">${days[new Date(r.date).getDay()]}</td>
+          <td class="px-4 py-2"><span class="badge ${statusBadge[r.status]}">${r.status}</span></td>
+          <td class="px-4 py-2 text-sm text-gray-500">${r.remarks || '-'}</td>
+        </tr>`).join('') || '<tr><td colspan="4" class="text-center py-6 text-gray-400">No records</td></tr>';
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  loadReport();
+  window.__pageInlineScriptExecuted = true;
+</script>
+<script src="../js/inline-fallback.js?v=1"></script>
+</body>
+</html>
+

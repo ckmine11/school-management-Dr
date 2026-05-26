@@ -1,0 +1,181 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | School Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-gray-50">
+<div class="flex h-screen overflow-hidden">
+  <div id="sidebar"></div>
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <div id="topbar"></div>
+    <main class="flex-1 overflow-y-auto p-6">
+
+      <!-- Stats Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+        <div class="card bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+          <div class="flex items-center justify-between mb-3">
+            <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center">
+              <i class="fas fa-users text-blue-600 text-xl"></i>
+            </div>
+            <span class="badge badge-blue">Total</span>
+          </div>
+          <div class="text-3xl font-bold text-gray-800" id="stat-students">--</div>
+          <div class="text-sm text-gray-500 mt-1">Total Students</div>
+        </div>
+        <div class="card bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+          <div class="flex items-center justify-between mb-3">
+            <div class="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center">
+              <i class="fas fa-chalkboard-teacher text-green-600 text-xl"></i>
+            </div>
+            <span class="badge badge-green">Active</span>
+          </div>
+          <div class="text-3xl font-bold text-gray-800" id="stat-teachers">--</div>
+          <div class="text-sm text-gray-500 mt-1">Total Teachers</div>
+        </div>
+        <div class="card bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+          <div class="flex items-center justify-between mb-3">
+            <div class="w-12 h-12 rounded-xl bg-yellow-50 flex items-center justify-center">
+              <i class="fas fa-indian-rupee-sign text-yellow-600 text-xl"></i>
+            </div>
+            <span class="badge badge-yellow">Collected</span>
+          </div>
+          <div class="text-3xl font-bold text-gray-800" id="stat-fees">--</div>
+          <div class="text-sm text-gray-500 mt-1">Fees Collected</div>
+        </div>
+        <div class="card bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+          <div class="flex items-center justify-between mb-3">
+            <div class="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center">
+              <i class="fas fa-calendar-check text-purple-600 text-xl"></i>
+            </div>
+            <span class="badge" id="att-badge">Today</span>
+          </div>
+          <div class="text-3xl font-bold text-gray-800" id="stat-attendance">--</div>
+          <div class="text-sm text-gray-500 mt-1">Today's Attendance</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <!-- Recent Notices -->
+        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="font-bold text-gray-800 text-lg">Recent Notices</h2>
+            <a href="notices.html" class="text-sm text-blue-600 hover:underline">View All</a>
+          </div>
+          <div id="notices-list" class="space-y-3">
+            <div class="text-center text-gray-400 py-8"><i class="fas fa-spinner fa-spin text-2xl"></i></div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+          <h2 class="font-bold text-gray-800 text-lg mb-4">Quick Actions</h2>
+          <div class="space-y-3">
+            <a href="students.html?action=add" class="flex items-center gap-3 p-3 rounded-xl bg-blue-50 hover:bg-blue-100 transition text-blue-700">
+              <i class="fas fa-user-plus w-5 text-center"></i>
+              <span class="text-sm font-semibold">Add New Student</span>
+            </a>
+            <a href="teachers.html?action=add" class="flex items-center gap-3 p-3 rounded-xl bg-green-50 hover:bg-green-100 transition text-green-700">
+              <i class="fas fa-user-tie w-5 text-center"></i>
+              <span class="text-sm font-semibold">Add New Teacher</span>
+            </a>
+            <a href="attendance.html?action=mark" class="flex items-center gap-3 p-3 rounded-xl bg-purple-50 hover:bg-purple-100 transition text-purple-700">
+              <i class="fas fa-calendar-check w-5 text-center"></i>
+              <span class="text-sm font-semibold">Mark Attendance</span>
+            </a>
+            <a href="fees.html?action=collect" class="flex items-center gap-3 p-3 rounded-xl bg-yellow-50 hover:bg-yellow-100 transition text-yellow-700">
+              <i class="fas fa-receipt w-5 text-center"></i>
+              <span class="text-sm font-semibold">Collect Fee</span>
+            </a>
+            <a href="results.html?action=add" class="flex items-center gap-3 p-3 rounded-xl bg-red-50 hover:bg-red-100 transition text-red-700">
+              <i class="fas fa-chart-bar w-5 text-center"></i>
+              <span class="text-sm font-semibold">Add Results</span>
+            </a>
+            <a href="notices.html?action=add" class="flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition text-gray-700">
+              <i class="fas fa-bullhorn w-5 text-center"></i>
+              <span class="text-sm font-semibold">Post Notice</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Class Stats -->
+      <div class="mt-5 bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+        <h2 class="font-bold text-gray-800 text-lg mb-4">Class-wise Student Count</h2>
+        <div id="class-stats" class="flex flex-wrap gap-3">
+          <div class="text-center text-gray-400 py-4 w-full"><i class="fas fa-spinner fa-spin text-2xl"></i></div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script src="../js/api.js?v=10"></script>
+<script src="../js/auth.js?v=10"></script>
+<script src="../js/layout.js?v=10"></script>
+<script>
+  const user = Auth.requireAuth(['admin']);
+  if (user) buildLayout('Dashboard', 'admin');
+
+  async function loadDashboard() {
+    try {
+      const [statsRes, classRes] = await Promise.all([
+        api.get('/dashboard/stats'),
+        api.get('/dashboard/class-stats')
+      ]);
+      const s = statsRes.data;
+      document.getElementById('stat-students').textContent = s.totalStudents;
+      document.getElementById('stat-teachers').textContent = s.totalTeachers;
+      document.getElementById('stat-fees').textContent = formatCurrency(s.feesCollected);
+      document.getElementById('stat-attendance').textContent = s.attendancePercent + '%';
+
+      const badge = document.getElementById('att-badge');
+      badge.textContent = `${s.presentToday}P / ${s.absentToday}A`;
+      badge.className = `badge ${s.attendancePercent >= 75 ? 'badge-green' : 'badge-red'}`;
+
+      // Notices
+      const noticesEl = document.getElementById('notices-list');
+      if (s.recentNotices?.length) {
+        const typeColors = { general:'badge-blue', exam:'badge-yellow', holiday:'badge-green', fee:'badge-red', event:'badge-blue', result:'badge-gray' };
+        noticesEl.innerHTML = s.recentNotices.map(n => `
+          <div class="flex items-start gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition">
+            ${n.isPinned ? '<i class="fas fa-thumbtack text-blue-500 mt-1 text-xs"></i>' : '<i class="fas fa-circle text-gray-300 mt-1 text-xs"></i>'}
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="font-semibold text-sm text-gray-800">${n.title}</span>
+                <span class="badge ${typeColors[n.type] || 'badge-gray'}">${n.type}</span>
+              </div>
+              <span class="text-xs text-gray-400">${formatDate(n.createdAt)}</span>
+            </div>
+          </div>`).join('');
+      } else {
+        noticesEl.innerHTML = '<p class="text-center text-gray-400 text-sm py-6">No recent notices</p>';
+      }
+
+      // Class stats
+      const classEl = document.getElementById('class-stats');
+      if (classRes.data?.length) {
+        classEl.innerHTML = classRes.data.map(c => `
+          <div class="flex flex-col items-center bg-blue-50 rounded-xl p-3 min-w-[80px]">
+            <div class="text-2xl font-bold text-blue-700">${c.count}</div>
+            <div class="text-xs font-semibold text-blue-600">${c._id.class}-${c._id.section}</div>
+          </div>`).join('');
+      } else {
+        classEl.innerHTML = '<p class="text-gray-400 text-sm">No data</p>';
+      }
+    } catch (err) {
+      showToast('Failed to load dashboard: ' + err.message, 'error');
+    }
+  }
+
+  loadDashboard();
+  window.__pageInlineScriptExecuted = true;
+</script>
+<script src="../js/inline-fallback.js?v=1"></script>
+</body>
+</html>
+

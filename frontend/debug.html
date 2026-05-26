@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>API Debug Test</title>
+  <style>
+    body { font-family: monospace; padding: 20px; background: #f5f5f5; }
+    .log { background: white; padding: 10px; margin: 10px 0; border-left: 4px solid #007bff; }
+    .error { border-left-color: #dc3545; }
+    .success { border-left-color: #28a745; }
+    button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>API Login Test</h1>
+  <button onclick="testLogin()">Test Login (Admin)</button>
+  <button onclick="clearLogs()">Clear Logs</button>
+  
+  <h2>Request/Response Logs:</h2>
+  <div id="logs"></div>
+
+  <script>
+    const logsDiv = document.getElementById('logs');
+    
+    function addLog(message, type = 'info') {
+      const div = document.createElement('div');
+      div.className = `log ${type}`;
+      div.textContent = JSON.stringify(message, null, 2);
+      logsDiv.appendChild(div);
+      console.log(`[${type}]`, message);
+    }
+    
+    function clearLogs() {
+      logsDiv.innerHTML = '';
+    }
+    
+    async function testLogin() {
+      clearLogs();
+      addLog('Starting login test...', 'info');
+      
+      try {
+        const body = {
+          email: "admin@school.com",
+          password: "admin123"
+        };
+        
+        addLog('Sending request to /api/auth/login', 'info');
+        addLog({ method: 'POST', body }, 'info');
+        
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(body)
+        });
+        
+        addLog(`Response status: ${response.status}`, response.ok ? 'success' : 'error');
+        
+        const data = await response.json();
+        addLog(data, response.ok ? 'success' : 'error');
+        
+      } catch (error) {
+        addLog(`Error: ${error.message}`, 'error');
+      }
+    }
+  </script>
+</body>
+</html>

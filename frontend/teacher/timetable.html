@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Timetable | School Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-gray-50">
+<div class="flex h-screen overflow-hidden">
+  <div id="sidebar"></div>
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <div id="topbar"></div>
+    <main class="flex-1 overflow-y-auto p-6">
+
+      <!-- Filters -->
+      <div class="flex flex-wrap items-center gap-3 mb-5">
+        <select id="ttClass" class="select w-36" onchange="loadTimetable()">
+          <option value="">Select Class</option>
+          <option value="Class 1">Class 1</option><option value="Class 2">Class 2</option>
+          <option value="Class 3">Class 3</option><option value="Class 4">Class 4</option>
+          <option value="Class 5">Class 5</option><option value="Class 6">Class 6</option>
+          <option value="Class 7">Class 7</option><option value="Class 8">Class 8</option>
+          <option value="Class 9">Class 9</option><option value="Class 10">Class 10</option>
+          <option value="Class 11">Class 11</option><option value="Class 12">Class 12</option>
+        </select>
+        <select id="ttSection" class="select w-28" onchange="loadTimetable()">
+          <option value="">Section</option>
+          <option value="A">A</option><option value="B">B</option>
+          <option value="C">C</option><option value="D">D</option>
+        </select>
+      </div>
+
+      <div id="ttGrid">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center text-gray-400">
+          <i class="fas fa-calendar-alt text-4xl mb-3 block"></i>
+          Select a class and section to view the timetable.
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="../js/api.js?v=10"></script>
+<script src="../js/auth.js?v=10"></script>
+<script src="../js/layout.js?v=10"></script>
+<script>
+  Auth.requireAuth(['teacher']);
+  buildLayout('Timetable', 'teacher');
+
+  const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  async function loadTimetable() {
+    const cls = document.getElementById('ttClass').value;
+    const section = document.getElementById('ttSection').value;
+    if (!cls || !section) return;
+
+    document.getElementById('ttGrid').innerHTML =
+      '<div class="text-center py-10 text-gray-400"><i class="fas fa-spinner fa-spin text-2xl"></i></div>';
+    try {
+      const res = await api.get('/timetable', { class: cls, section });
+      renderGrid(res.data, cls, section);
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }
+
+  function renderGrid(data, cls, section) {
+    const grid = document.getElementById('ttGrid');
+    grid.innerHTML = `
+      <div class="bg-blue-50 border border-blue-100 rounded-2xl px-5 py-3 mb-4 flex items-center gap-3">
+        <i class="fas fa-info-circle text-blue-500"></i>
+        <span class="text-sm text-blue-700 font-medium">${cls} — Section ${section} Weekly Timetable</span>
+      </div>` +
+      DAYS.map(day => {
+        const periods = data[day] || [];
+        return `
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-4">
+            <div class="px-5 py-3 border-b bg-gray-50">
+              <span class="font-semibold text-gray-700">${day}</span>
+              <span class="ml-2 text-xs text-gray-400">${periods.length} period${periods.length !== 1 ? 's' : ''}</span>
+            </div>
+            <div class="overflow-x-auto">
+              ${periods.length === 0
+                ? '<p class="text-center text-gray-400 text-sm py-4">No periods scheduled</p>'
+                : `<table class="w-full text-sm">
+                    <thead class="bg-gray-50 text-xs text-gray-500">
+                      <tr>
+                        <th class="text-left px-4 py-2 w-16">Period</th>
+                        <th class="text-left px-4 py-2">Time</th>
+                        <th class="text-left px-4 py-2">Subject</th>
+                        <th class="text-left px-4 py-2">Teacher</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                      ${periods.map(p => `
+                        <tr class="hover:bg-gray-50">
+                          <td class="px-4 py-2.5 font-semibold text-blue-600">P${p.periodNo}</td>
+                          <td class="px-4 py-2.5 text-gray-600">${p.startTime || '--:--'} – ${p.endTime || '--:--'}</td>
+                          <td class="px-4 py-2.5 font-medium">${p.subject}</td>
+                          <td class="px-4 py-2.5 text-gray-500">${p.teacherName || '-'}</td>
+                        </tr>`).join('')}
+                    </tbody>
+                  </table>`}
+            </div>
+          </div>`;
+      }).join('');
+  }
+
+  window.__pageInlineScriptExecuted = true;
+</script>
+<script src="../js/inline-fallback.js?v=1"></script>
+</body>
+</html>

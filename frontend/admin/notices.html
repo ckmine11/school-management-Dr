@@ -1,0 +1,242 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notice Board | School Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-gray-50">
+<div class="flex h-screen overflow-hidden">
+  <div id="sidebar"></div>
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <div id="topbar"></div>
+    <main class="flex-1 overflow-y-auto p-6">
+
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <div class="flex gap-2">
+          <select id="nType" class="select w-32" onchange="loadNotices()">
+            <option value="">All Types</option>
+            <option value="general">General</option><option value="exam">Exam</option>
+            <option value="holiday">Holiday</option><option value="event">Event</option>
+            <option value="fee">Fee</option><option value="result">Result</option>
+          </select>
+          <select id="nAudience" class="select w-32" onchange="loadNotices()">
+            <option value="">All Audiences</option>
+            <option value="all">All</option><option value="students">Students</option>
+            <option value="teachers">Teachers</option><option value="parents">Parents</option>
+          </select>
+        </div>
+        <button id="postNoticeButton" class="btn btn-primary" onclick="openModal()"><i class="fas fa-plus"></i> Post Notice</button>
+      </div>
+
+      <div id="noticesGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div class="col-span-full text-center py-10 text-gray-400"><i class="fas fa-spinner fa-spin text-2xl"></i></div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div id="noticeModal" class="hidden fixed inset-0 bg-black/50 modal-backdrop z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+    <div class="flex items-center justify-between px-6 py-4 border-b">
+      <h2 class="font-bold text-lg" id="nModalTitle">Post Notice</h2>
+      <button onclick="hideModal('noticeModal')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"><i class="fas fa-times"></i></button>
+    </div>
+    <form id="noticeForm" onsubmit="saveNotice(event)" class="p-6 space-y-4">
+      <input type="hidden" id="noticeId">
+      <div><label class="label">Title *</label><input type="text" id="n-title" class="input" required></div>
+      <div><label class="label">Content *</label><textarea id="n-content" class="input h-28 resize-none" required></textarea></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="label">Type</label>
+          <select id="n-type" class="select">
+            <option value="general">General</option><option value="exam">Exam</option>
+            <option value="holiday">Holiday</option><option value="event">Event</option>
+            <option value="fee">Fee</option><option value="result">Result</option>
+          </select>
+        </div>
+        <div>
+          <label class="label">Audience</label>
+          <select id="n-audience" class="select">
+            <option value="all">All</option><option value="students">Students</option>
+            <option value="teachers">Teachers</option><option value="parents">Parents</option>
+          </select>
+        </div>
+      </div>
+      <div><label class="label">Expires At (optional)</label><input type="date" id="n-expires" class="input"></div>
+      <div class="flex gap-4">
+        <label class="flex items-center gap-2 text-sm cursor-pointer">
+          <input type="checkbox" id="n-public" class="rounded"> Show on Public Website
+        </label>
+        <label class="flex items-center gap-2 text-sm cursor-pointer">
+          <input type="checkbox" id="n-pinned" class="rounded"> Pin to Top
+        </label>
+      </div>
+      <label class="flex items-center gap-2 text-sm cursor-pointer p-3 bg-green-50 rounded-xl border border-green-200">
+        <input type="checkbox" id="n-whatsapp" class="rounded">
+        <i class="fab fa-whatsapp text-green-600"></i>
+        <span class="text-green-700 font-medium">Also send via WhatsApp</span>
+      </label>
+      <label class="flex items-center gap-2 text-sm cursor-pointer p-3 bg-blue-50 rounded-xl border border-blue-200" id="pushCheckboxRow">
+        <input type="checkbox" id="n-push" class="rounded">
+        <i class="fas fa-bell text-blue-600"></i>
+        <span class="text-blue-700 font-medium">Also send Push Notification (Browser)</span>
+      </label>
+      <div class="flex justify-end gap-3 pt-2">
+        <button type="button" onclick="hideModal('noticeModal')" class="btn btn-secondary">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-bullhorn"></i> Post</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="../js/api.js?v=10"></script>
+<script src="../js/auth.js?v=10"></script>
+<script src="../js/layout.js?v=10"></script>
+<script>
+  const user = Auth.requireAuth(['admin', 'teacher', 'student', 'parent']);
+  const isAdmin = user?.role === 'admin';
+  const pageAction = new URLSearchParams(window.location.search).get('action');
+  buildLayout('Notice Board', user?.role || 'admin');
+
+  const typeColors = { general:'badge-blue', exam:'badge-yellow', holiday:'badge-green', fee:'badge-red', event:'badge-blue', result:'badge-gray' };
+  const typeIcons = { general:'fa-bullhorn', exam:'fa-pen', holiday:'fa-umbrella-beach', fee:'fa-rupee-sign', event:'fa-calendar', result:'fa-chart-bar' };
+
+  function clearPageAction() {
+    if (!window.location.search) return;
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+
+  async function loadNotices() {
+    const type = document.getElementById('nType')?.value;
+    const audience = document.getElementById('nAudience')?.value;
+    const params = {};
+    if (type) params.type = type;
+    if (audience) params.audience = audience;
+    try {
+      const res = await api.get('/notices', params);
+      const grid = document.getElementById('noticesGrid');
+      if (!res.data.length) {
+        grid.innerHTML = '<div class="col-span-full text-center py-10 text-gray-400">No notices found</div>';
+        return;
+      }
+      grid.innerHTML = res.data.map(n => `
+        <div class="card bg-white rounded-2xl shadow-sm border border-gray-100 p-5 relative ${n.isPinned ? 'border-l-4 border-l-blue-500' : ''}">
+          ${n.isPinned ? '<span class="absolute top-3 right-3 text-blue-400 text-xs"><i class="fas fa-thumbtack"></i></span>' : ''}
+          <div class="flex items-start gap-3 mb-3">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${n.type==='exam'?'bg-yellow-50 text-yellow-600':n.type==='holiday'?'bg-green-50 text-green-600':n.type==='fee'?'bg-red-50 text-red-600':'bg-blue-50 text-blue-600'}">
+              <i class="fas ${typeIcons[n.type]||'fa-bullhorn'}"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <h3 class="font-bold text-gray-800 text-sm leading-tight">${n.title}</h3>
+              <div class="flex gap-1 mt-1 flex-wrap">
+                <span class="badge ${typeColors[n.type]||'badge-gray'}">${n.type}</span>
+                <span class="badge badge-gray">${n.targetAudience}</span>
+                ${n.isPublic ? '<span class="badge badge-green">Public</span>' : ''}
+              </div>
+            </div>
+          </div>
+          <p class="text-sm text-gray-600 mb-3 leading-relaxed">${n.content}</p>
+          <div class="flex items-center justify-between text-xs text-gray-400">
+            <span><i class="fas fa-calendar-alt mr-1"></i>${formatDate(n.createdAt)}</span>
+            ${isAdmin ? `<div class="flex gap-1">
+              <button onclick="editNotice('${n._id}')" class="btn btn-secondary !py-1 !px-2 text-xs"><i class="fas fa-edit"></i></button>
+              <button onclick="deleteNotice('${n._id}')" class="btn btn-danger !py-1 !px-2 text-xs"><i class="fas fa-trash"></i></button>
+            </div>` : ''}
+          </div>
+        </div>`).join('');
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  let noticesData = [];
+  async function editNotice(id) {
+    try {
+      const res = await api.get(`/notices/${id}`);
+      const n = res.data;
+      document.getElementById('noticeId').value = n._id;
+      document.getElementById('nModalTitle').textContent = 'Edit Notice';
+      document.getElementById('n-title').value = n.title;
+      document.getElementById('n-content').value = n.content;
+      document.getElementById('n-type').value = n.type;
+      document.getElementById('n-audience').value = n.targetAudience;
+      document.getElementById('n-expires').value = n.expiresAt ? n.expiresAt.split('T')[0] : '';
+      document.getElementById('n-public').checked = n.isPublic;
+      document.getElementById('n-pinned').checked = n.isPinned;
+      document.getElementById('n-whatsapp').checked = false;
+      showModal('noticeModal');
+      window.setTimeout(() => document.getElementById('n-title')?.focus(), 50);
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  function openModal() {
+    if (!isAdmin) return showToast('Only admin can post notices.', 'error');
+    document.getElementById('noticeForm').reset();
+    document.getElementById('noticeId').value = '';
+    document.getElementById('nModalTitle').textContent = 'Post Notice';
+    showModal('noticeModal');
+    window.setTimeout(() => document.getElementById('n-title')?.focus(), 50);
+  }
+
+  async function saveNotice(e) {
+    e.preventDefault();
+    const id = document.getElementById('noticeId').value;
+    const title = document.getElementById('n-title').value;
+    const content = document.getElementById('n-content').value;
+    const sendPush = document.getElementById('n-push').checked;
+    const data = {
+      title,
+      content,
+      type: document.getElementById('n-type').value,
+      targetAudience: document.getElementById('n-audience').value,
+      expiresAt: document.getElementById('n-expires').value || null,
+      isPublic: document.getElementById('n-public').checked,
+      isPinned: document.getElementById('n-pinned').checked,
+      sendWhatsApp: document.getElementById('n-whatsapp').checked
+    };
+    try {
+      if (id) await api.put(`/notices/${id}`, data);
+      else await api.post('/notices', data);
+
+      if (sendPush) {
+        try {
+          await api.post('/notifications/send', { title, message: content, url: '/admin/notices.html' });
+          showToast('Notice posted + Push notification sent!', 'success');
+        } catch {
+          showToast('Notice posted! (Push notification failed)', 'success');
+        }
+      } else {
+        showToast(id ? 'Notice updated!' : 'Notice posted!', 'success');
+      }
+      hideModal('noticeModal');
+      loadNotices();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  // Hide push checkbox if not configured
+  api.get('/notifications/config').then(res => {
+    if (!res.configured) document.getElementById('pushCheckboxRow').style.display = 'none';
+  }).catch(() => { document.getElementById('pushCheckboxRow').style.display = 'none'; });
+
+  async function deleteNotice(id) {
+    if (!confirm('Delete this notice?')) return;
+    try { await api.delete(`/notices/${id}`); showToast('Deleted', 'success'); loadNotices(); }
+    catch (err) { showToast(err.message, 'error'); }
+  }
+
+  loadNotices();
+  if (!isAdmin) {
+    document.getElementById('postNoticeButton')?.classList.add('hidden');
+  } else if (pageAction === 'add') {
+    openModal();
+    clearPageAction();
+  }
+  window.__pageInlineScriptExecuted = true;
+</script>
+<script src="../js/inline-fallback.js?v=1"></script>
+</body>
+</html>
+

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exam Schedule | School Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-gray-50">
+<div class="flex h-screen overflow-hidden">
+  <div id="sidebar"></div>
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <div id="topbar"></div>
+    <main class="flex-1 overflow-y-auto p-6">
+
+      <!-- Filters + Actions -->
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <div class="flex gap-2 flex-wrap">
+          <select id="exClassFilter" class="select w-32" onchange="loadExams()">
+            <option value="">All Classes</option>
+            <option value="Class 1">Class 1</option><option value="Class 2">Class 2</option>
+            <option value="Class 3">Class 3</option><option value="Class 4">Class 4</option>
+            <option value="Class 5">Class 5</option><option value="Class 6">Class 6</option>
+            <option value="Class 7">Class 7</option><option value="Class 8">Class 8</option>
+            <option value="Class 9">Class 9</option><option value="Class 10">Class 10</option>
+            <option value="Class 11">Class 11</option><option value="Class 12">Class 12</option>
+          </select>
+          <select id="exTypeFilter" class="select w-36" onchange="loadExams()">
+            <option value="">All Types</option>
+            <option value="unit-test">Unit Test</option>
+            <option value="midterm">Midterm</option>
+            <option value="quarterly">Quarterly</option>
+            <option value="final">Final</option>
+            <option value="other">Other</option>
+          </select>
+          <input type="text" id="exYearFilter" class="input w-28" placeholder="e.g. 2025-26" onchange="loadExams()">
+        </div>
+        <button onclick="openAddExam()" class="btn btn-primary"><i class="fas fa-plus"></i> Add Exam</button>
+      </div>
+
+      <!-- Table -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th class="text-left px-4 py-3 text-gray-500">Date</th>
+                <th class="text-left px-4 py-3 text-gray-500">Subject</th>
+                <th class="text-left px-4 py-3 text-gray-500">Class</th>
+                <th class="text-left px-4 py-3 text-gray-500">Type</th>
+                <th class="text-left px-4 py-3 text-gray-500">Time</th>
+                <th class="text-left px-4 py-3 text-gray-500">Duration</th>
+                <th class="text-left px-4 py-3 text-gray-500">Marks</th>
+                <th class="text-left px-4 py-3 text-gray-500">Reminder</th>
+                <th class="text-left px-4 py-3 text-gray-500">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="examTable" class="divide-y divide-gray-100">
+              <tr><td colspan="9" class="text-center py-10 text-gray-400"><i class="fas fa-spinner fa-spin text-2xl"></i></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Add/Edit Exam Modal -->
+<div id="examModal" class="hidden fixed inset-0 bg-black/50 modal-backdrop z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+    <div class="flex items-center justify-between px-6 py-4 border-b">
+      <h2 class="font-bold text-lg text-gray-800" id="examModalTitle">Add Exam</h2>
+      <button onclick="hideModal('examModal')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"><i class="fas fa-times"></i></button>
+    </div>
+    <form id="examForm" onsubmit="saveExam(event)" class="p-6">
+      <input type="hidden" id="ex-id">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="label">Exam Type *</label>
+          <select id="ex-type" class="select" required>
+            <option value="">Select</option>
+            <option value="unit-test">Unit Test</option>
+            <option value="midterm">Midterm</option>
+            <option value="quarterly">Quarterly</option>
+            <option value="final">Final</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="label">Academic Year *</label>
+          <input type="text" id="ex-year" class="input" placeholder="2025-26" required>
+        </div>
+        <div>
+          <label class="label">Class *</label>
+          <select id="ex-class" class="select" required>
+            <option value="">Select</option>
+            <option value="Class 1">Class 1</option><option value="Class 2">Class 2</option>
+            <option value="Class 3">Class 3</option><option value="Class 4">Class 4</option>
+            <option value="Class 5">Class 5</option><option value="Class 6">Class 6</option>
+            <option value="Class 7">Class 7</option><option value="Class 8">Class 8</option>
+            <option value="Class 9">Class 9</option><option value="Class 10">Class 10</option>
+            <option value="Class 11">Class 11</option><option value="Class 12">Class 12</option>
+          </select>
+        </div>
+        <div>
+          <label class="label">Section</label>
+          <select id="ex-section" class="select">
+            <option value="All">All Sections</option>
+            <option value="A">A</option><option value="B">B</option>
+            <option value="C">C</option><option value="D">D</option>
+          </select>
+        </div>
+        <div class="col-span-2">
+          <label class="label">Subject *</label>
+          <input type="text" id="ex-subject" class="input" placeholder="Mathematics" required>
+        </div>
+        <div>
+          <label class="label">Exam Date *</label>
+          <input type="date" id="ex-date" class="input" required>
+        </div>
+        <div>
+          <label class="label">Start Time *</label>
+          <input type="time" id="ex-time" class="input" required>
+        </div>
+        <div>
+          <label class="label">Duration (minutes)</label>
+          <input type="number" id="ex-duration" class="input" value="180" min="15">
+        </div>
+        <div>
+          <label class="label">Max Marks</label>
+          <input type="number" id="ex-marks" class="input" value="100" min="1">
+        </div>
+        <div>
+          <label class="label">Room / Hall</label>
+          <input type="text" id="ex-room" class="input" placeholder="Hall A">
+        </div>
+        <div>
+          <label class="label">Notes</label>
+          <input type="text" id="ex-notes" class="input" placeholder="Optional">
+        </div>
+      </div>
+      <div class="flex justify-end gap-3 mt-5">
+        <button type="button" onclick="hideModal('examModal')" class="btn btn-secondary">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="../js/api.js?v=10"></script>
+<script src="../js/auth.js?v=10"></script>
+<script src="../js/layout.js?v=10"></script>
+<script>
+  Auth.requireAuth(['admin']);
+  buildLayout('Exam Schedule', 'admin');
+
+  let exams = [];
+
+  const TYPE_LABELS = {
+    'unit-test': 'Unit Test', midterm: 'Midterm',
+    quarterly: 'Quarterly', final: 'Final', other: 'Other'
+  };
+
+  async function loadExams() {
+    const cls = document.getElementById('exClassFilter').value;
+    const examType = document.getElementById('exTypeFilter').value;
+    const academicYear = document.getElementById('exYearFilter').value;
+    const params = {};
+    if (cls) params.class = cls;
+    if (examType) params.examType = examType;
+    if (academicYear) params.academicYear = academicYear;
+    try {
+      const res = await api.get('/exams', params);
+      exams = res.data;
+      renderTable(exams);
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }
+
+  function renderTable(data) {
+    const tb = document.getElementById('examTable');
+    if (!data.length) {
+      tb.innerHTML = '<tr><td colspan="9" class="text-center py-10 text-gray-400">No exams scheduled</td></tr>';
+      return;
+    }
+    tb.innerHTML = data.map(e => `
+      <tr class="hover:bg-gray-50">
+        <td class="px-4 py-3 text-sm font-semibold">${formatDate(e.examDate)}</td>
+        <td class="px-4 py-3 text-sm font-medium text-blue-700">${e.subject}</td>
+        <td class="px-4 py-3 text-sm">${e.class}${e.section !== 'All' ? ` - ${e.section}` : ''}</td>
+        <td class="px-4 py-3 text-sm">${TYPE_LABELS[e.examType] || e.examType}</td>
+        <td class="px-4 py-3 text-sm">${e.startTime}</td>
+        <td class="px-4 py-3 text-sm">${e.duration} min</td>
+        <td class="px-4 py-3 text-sm">${e.maxMarks}</td>
+        <td class="px-4 py-3">
+          ${e.reminderSent
+            ? '<span class="badge badge-green">Sent</span>'
+            : '<span class="badge badge-yellow">Pending</span>'}
+        </td>
+        <td class="px-4 py-3">
+          <div class="flex gap-1">
+            <button onclick="editExam('${e._id}')" class="btn btn-secondary !py-1 !px-2 text-xs" title="Edit"><i class="fas fa-edit"></i></button>
+            <button onclick="sendReminder('${e._id}')" class="btn btn-warning !py-1 !px-2 text-xs" title="Send Reminder Now"><i class="fab fa-whatsapp"></i></button>
+            <button onclick="deleteExam('${e._id}')" class="btn btn-danger !py-1 !px-2 text-xs"><i class="fas fa-trash"></i></button>
+          </div>
+        </td>
+      </tr>`).join('');
+  }
+
+  function openAddExam() {
+    document.getElementById('ex-id').value = '';
+    document.getElementById('examModalTitle').textContent = 'Add Exam';
+    document.getElementById('examForm').reset();
+    document.getElementById('ex-section').value = 'All';
+    document.getElementById('ex-duration').value = '180';
+    document.getElementById('ex-marks').value = '100';
+    document.getElementById('ex-date').value = new Date().toISOString().split('T')[0];
+    showModal('examModal');
+  }
+
+  function editExam(id) {
+    const e = exams.find(x => x._id === id);
+    if (!e) return;
+    document.getElementById('ex-id').value = e._id;
+    document.getElementById('examModalTitle').textContent = 'Edit Exam';
+    document.getElementById('ex-type').value = e.examType;
+    document.getElementById('ex-year').value = e.academicYear;
+    document.getElementById('ex-class').value = e.class;
+    document.getElementById('ex-section').value = e.section || 'All';
+    document.getElementById('ex-subject').value = e.subject;
+    document.getElementById('ex-date').value = e.examDate ? e.examDate.split('T')[0] : '';
+    document.getElementById('ex-time').value = e.startTime;
+    document.getElementById('ex-duration').value = e.duration;
+    document.getElementById('ex-marks').value = e.maxMarks;
+    document.getElementById('ex-room').value = e.room || '';
+    document.getElementById('ex-notes').value = e.notes || '';
+    showModal('examModal');
+  }
+
+  async function saveExam(ev) {
+    ev.preventDefault();
+    const id = document.getElementById('ex-id').value;
+    const body = {
+      examType: document.getElementById('ex-type').value,
+      academicYear: document.getElementById('ex-year').value,
+      class: document.getElementById('ex-class').value,
+      section: document.getElementById('ex-section').value,
+      subject: document.getElementById('ex-subject').value,
+      examDate: document.getElementById('ex-date').value,
+      startTime: document.getElementById('ex-time').value,
+      duration: parseInt(document.getElementById('ex-duration').value) || 180,
+      maxMarks: parseInt(document.getElementById('ex-marks').value) || 100,
+      room: document.getElementById('ex-room').value,
+      notes: document.getElementById('ex-notes').value
+    };
+    try {
+      if (id) {
+        await api.put(`/exams/${id}`, body);
+        showToast('Exam updated!', 'success');
+      } else {
+        await api.post('/exams', body);
+        showToast('Exam added!', 'success');
+      }
+      hideModal('examModal');
+      loadExams();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }
+
+  async function sendReminder(id) {
+    if (!confirm('Send WhatsApp reminder for this exam to all parents now?')) return;
+    try {
+      const res = await api.post('/exams/send-reminder', { examId: id });
+      showToast(res.message || 'Reminder queued!', res.success ? 'success' : 'error');
+      if (res.success) loadExams();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }
+
+  async function deleteExam(id) {
+    if (!confirm('Delete this exam?')) return;
+    try {
+      await api.delete(`/exams/${id}`);
+      showToast('Deleted', 'success');
+      loadExams();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }
+
+  loadExams();
+  window.__pageInlineScriptExecuted = true;
+</script>
+<script src="../js/inline-fallback.js?v=1"></script>
+</body>
+</html>

@@ -1,0 +1,88 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parent Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-gray-50">
+<div class="flex h-screen overflow-hidden">
+  <div id="sidebar"></div>
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <div id="topbar"></div>
+    <main class="flex-1 overflow-y-auto p-6">
+
+      <div class="bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl p-6 mb-6 text-white">
+        <h2 class="text-2xl font-bold mb-1" id="welcomeMsg">Welcome!</h2>
+        <p class="text-orange-100 text-sm">Stay updated with your child's school activities.</p>
+      </div>
+
+      <!-- Child Info -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-5" id="childInfo">
+        <h2 class="font-bold text-gray-800 mb-4">Your Child's Information</h2>
+        <div id="childDetails" class="text-center text-gray-400 py-4"><i class="fas fa-spinner fa-spin text-2xl"></i></div>
+      </div>
+
+      <!-- Notices -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="font-bold text-gray-800">Latest Notices</h2>
+          <a href="../admin/notices.html" class="text-sm text-blue-600 hover:underline">View All</a>
+        </div>
+        <div id="noticesList">
+          <div class="text-center text-gray-400 py-4"><i class="fas fa-spinner fa-spin text-2xl"></i></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../js/api.js?v=10"></script>
+<script src="../js/auth.js?v=10"></script>
+<script src="../js/layout.js?v=10"></script>
+<script>
+  const user = Auth.requireAuth(['parent']);
+  buildLayout('Parent Dashboard', 'parent');
+  document.getElementById('welcomeMsg').textContent = `Welcome, ${user?.name || 'Parent'}!`;
+
+  // Load child info if linked
+  const childEl = document.getElementById('childDetails');
+  if (user?.roleId) {
+    api.get(`/students/${user.roleId}`).then(res => {
+      const s = res.data;
+      childEl.innerHTML = `
+        <div class="flex items-center gap-4 p-4 bg-orange-50 rounded-xl">
+          <div class="w-14 h-14 rounded-full bg-orange-100 flex items-center justify-center text-2xl font-bold text-orange-600">${s.name[0]}</div>
+          <div class="text-left">
+            <h3 class="font-bold text-gray-800 text-lg">${s.name}</h3>
+            <p class="text-sm text-gray-600">Class ${s.class} - ${s.section} | Roll: ${s.rollNo || '-'}</p>
+            <p class="text-xs text-gray-500 font-mono">${s.studentId}</p>
+            <span class="badge ${s.status==='active'?'badge-green':'badge-red'} mt-1">${s.status}</span>
+          </div>
+        </div>`;
+    }).catch(() => {
+      childEl.innerHTML = '<p class="text-gray-400 text-sm">No child linked to this account. Contact admin.</p>';
+    });
+  } else {
+    childEl.innerHTML = '<p class="text-gray-400 text-sm">No child linked to this account. Contact admin.</p>';
+  }
+
+  // Load notices for parents
+  api.get('/notices', { audience: 'parents' }).then(res => {
+    const el = document.getElementById('noticesList');
+    const typeColors = { general:'badge-blue', exam:'badge-yellow', holiday:'badge-green', fee:'badge-red' };
+    if (!res.data.length) { el.innerHTML = '<p class="text-center text-gray-400 text-sm py-4">No notices</p>'; return; }
+    el.innerHTML = res.data.slice(0,5).map(n => `
+      <div class="p-3 bg-gray-50 rounded-xl mb-2">
+        <div class="flex items-center gap-2 mb-1"><span class="font-semibold text-sm">${n.title}</span><span class="badge ${typeColors[n.type]||'badge-gray'}">${n.type}</span></div>
+        <p class="text-xs text-gray-600">${n.content}</p>
+        <span class="text-xs text-gray-400">${formatDate(n.createdAt)}</span>
+      </div>`).join('');
+  }).catch(() => {});
+  window.__pageInlineScriptExecuted = true;
+</script>
+<script src="../js/inline-fallback.js?v=1"></script>
+</body>
+</html>
+

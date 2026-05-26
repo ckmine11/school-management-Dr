@@ -1,0 +1,376 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Results | School Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-gray-50">
+<div class="flex h-screen overflow-hidden">
+  <div id="sidebar"></div>
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <div id="topbar"></div>
+    <main class="flex-1 overflow-y-auto p-6">
+
+      <!-- Filter -->
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <div class="flex gap-2 flex-wrap">
+          <select id="rClass" class="select w-36">
+            <option value="">All Classes</option>
+            <option value="Class 1">Class 1</option>
+            <option value="Class 2">Class 2</option>
+            <option value="Class 3">Class 3</option>
+            <option value="Class 4">Class 4</option>
+            <option value="Class 5">Class 5</option>
+            <option value="Class 6">Class 6</option>
+            <option value="Class 7">Class 7</option>
+            <option value="Class 8">Class 8</option>
+            <option value="Class 9">Class 9</option>
+            <option value="Class 10">Class 10</option>
+            <option value="Class 11">Class 11</option>
+            <option value="Class 12">Class 12</option>
+          </select>
+          <select id="rSection" class="select w-28">
+            <option value="">All Sections</option>
+            <option>A</option><option>B</option><option>C</option><option>D</option>
+          </select>
+          <select id="rExam" class="select w-36">
+            <option value="">All Exams</option>
+            <option value="unit-test">Unit Test</option>
+            <option value="midterm">Midterm</option>
+            <option value="quarterly">Quarterly</option>
+            <option value="final">Final</option>
+          </select>
+          <input type="text" id="rYear" class="input w-32" placeholder="Academic Year">
+          <button onclick="loadResults()" class="btn btn-secondary"><i class="fas fa-search"></i></button>
+        </div>
+        <button onclick="openModal()" class="btn btn-primary"><i class="fas fa-plus"></i> Add Result</button>
+      </div>
+
+      <!-- Table -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th class="text-left px-4 py-3 text-gray-500">Student</th>
+                <th class="text-left px-4 py-3 text-gray-500">Class</th>
+                <th class="text-left px-4 py-3 text-gray-500">Exam</th>
+                <th class="text-left px-4 py-3 text-gray-500">Total</th>
+                <th class="text-left px-4 py-3 text-gray-500">%</th>
+                <th class="text-left px-4 py-3 text-gray-500">Grade</th>
+                <th class="text-left px-4 py-3 text-gray-500">Rank</th>
+                <th class="text-left px-4 py-3 text-gray-500">Status</th>
+                <th class="text-left px-4 py-3 text-gray-500">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="resultTable" class="divide-y divide-gray-100">
+              <tr><td colspan="9" class="text-center py-10 text-gray-400">Select filters to view results</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Add Result Modal -->
+<div id="resultModal" class="hidden fixed inset-0 bg-black/50 modal-backdrop z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between px-6 py-4 border-b">
+      <h2 class="font-bold text-lg text-gray-800">Add Result</h2>
+      <button onclick="hideModal('resultModal')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="p-6">
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="label">Student *</label>
+          <select id="res-studentId" class="select" required>
+            <option value="">Loading students...</option>
+          </select>
+        </div>
+        <div>
+          <label class="label">Exam Type</label>
+          <select id="res-exam" class="select">
+            <option value="unit-test">Unit Test</option><option value="midterm">Midterm</option>
+            <option value="quarterly">Quarterly</option><option value="final">Final</option>
+          </select>
+        </div>
+        <div>
+          <label class="label">Class</label>
+          <select id="res-class" class="select">
+            <option value="Class 1">Class 1</option>
+            <option value="Class 2">Class 2</option>
+            <option value="Class 3">Class 3</option>
+            <option value="Class 4">Class 4</option>
+            <option value="Class 5">Class 5</option>
+            <option value="Class 6">Class 6</option>
+            <option value="Class 7">Class 7</option>
+            <option value="Class 8">Class 8</option>
+            <option value="Class 9">Class 9</option>
+            <option value="Class 10">Class 10</option>
+            <option value="Class 11">Class 11</option>
+            <option value="Class 12">Class 12</option>
+          </select>
+        </div>
+        <div>
+          <label class="label">Section</label>
+          <select id="res-section" class="select">
+            <option>A</option><option>B</option><option>C</option><option>D</option>
+          </select>
+        </div>
+        <div><label class="label">Academic Year</label><input type="text" id="res-year" class="input" placeholder="2026-2027"></div>
+      </div>
+
+      <div class="border-t pt-4">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-semibold text-gray-700">Subjects</h3>
+          <button onclick="addSubjectRow()" class="btn btn-secondary !py-1 !px-3 text-xs"><i class="fas fa-plus"></i> Add Subject</button>
+        </div>
+        <div id="subjectRows" class="space-y-2">
+          <div class="grid grid-cols-12 gap-2 items-end">
+            <div class="col-span-5"><label class="label">Subject</label><input type="text" class="input sub-name" placeholder="e.g., Mathematics"></div>
+            <div class="col-span-3"><label class="label">Max Marks</label><input type="number" class="input sub-max" value="100" min="1"></div>
+            <div class="col-span-3"><label class="label">Obtained</label><input type="number" class="input sub-obtained" min="0"></div>
+            <div class="col-span-1"><button type="button" onclick="this.closest('.grid').remove()" class="btn btn-danger !py-2 !px-2 text-xs mt-5"><i class="fas fa-times"></i></button></div>
+          </div>
+        </div>
+      </div>
+      <div class="mt-4"><label class="label">Remarks</label><input type="text" id="res-remarks" class="input"></div>
+      <div class="flex justify-end gap-3 mt-5">
+        <button onclick="hideModal('resultModal')" class="btn btn-secondary">Cancel</button>
+        <button onclick="saveResult()" class="btn btn-primary"><i class="fas fa-save"></i> Save Result</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Result Card Modal -->
+<div id="cardModal" class="hidden fixed inset-0 bg-black/50 modal-backdrop z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between px-6 py-4 border-b no-print">
+      <h2 class="font-bold text-lg">Result Card</h2>
+      <div class="flex gap-2">
+        <button onclick="window.print()" class="btn btn-primary !py-1 !px-3 text-xs"><i class="fas fa-print"></i> Print</button>
+        <button onclick="hideModal('cardModal')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"><i class="fas fa-times"></i></button>
+      </div>
+    </div>
+    <div id="cardContent" class="p-6"></div>
+  </div>
+</div>
+
+<script src="../js/api.js?v=10"></script>
+<script src="../js/auth.js?v=10"></script>
+<script src="../js/layout.js?v=10"></script>
+<script>
+  Auth.requireAuth(['admin', 'teacher']);
+  buildLayout('Results', 'admin');
+  const pageAction = new URLSearchParams(window.location.search).get('action');
+  let results = [];
+  let resultStudents = [];
+  const defaultSubjectRows = document.getElementById('subjectRows').innerHTML;
+
+  function clearPageAction() {
+    if (!window.location.search) return;
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+
+  function getCurrentAcademicYear() {
+    const year = new Date().getFullYear();
+    return `${year}-${year + 1}`;
+  }
+
+  async function loadStudentsForResults(selectedId = '') {
+    try {
+      const res = await api.get('/students', { status: 'active', limit: 500 });
+      resultStudents = res.data || [];
+      const select = document.getElementById('res-studentId');
+      select.innerHTML = '<option value="">Select Student</option>' + resultStudents.map((student) => `
+        <option value="${student._id}">${student.studentId} - ${student.name} (${student.class} - ${student.section})</option>
+      `).join('');
+      if (selectedId) select.value = selectedId;
+    } catch (err) {
+      showToast('Failed to load students: ' + err.message, 'error');
+    }
+  }
+
+  function syncSelectedStudentDetails() {
+    const selectedId = document.getElementById('res-studentId').value;
+    const student = resultStudents.find((item) => item._id === selectedId);
+    if (!student) return;
+    document.getElementById('res-class').value = student.class;
+    document.getElementById('res-section').value = student.section;
+  }
+
+  async function loadResults() {
+    const params = {};
+    const cls = document.getElementById('rClass').value;
+    const section = document.getElementById('rSection').value;
+    const exam = document.getElementById('rExam').value;
+    const year = document.getElementById('rYear').value;
+    if (cls) params.class = cls;
+    if (section) params.section = section;
+    if (exam) params.examType = exam;
+    if (year) params.academicYear = year;
+    try {
+      const res = await api.get('/results', params);
+      results = res.data;
+      renderTable(results);
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  function renderTable(data) {
+    const tb = document.getElementById('resultTable');
+    const gradeColor = { 'A+':'badge-green', 'A':'badge-green', 'B+':'badge-blue', 'B':'badge-blue', 'C':'badge-yellow', 'D':'badge-yellow', 'F':'badge-red' };
+    if (!data.length) { tb.innerHTML = '<tr><td colspan="9" class="text-center py-10 text-gray-400">No results found</td></tr>'; return; }
+    tb.innerHTML = data.map(r => `
+      <tr class="hover:bg-gray-50">
+        <td class="px-4 py-3">
+          <div class="font-semibold text-sm">${r.studentId?.name || 'Unknown'}</div>
+          <div class="text-xs text-gray-400">${r.studentId?.studentId || ''}</div>
+        </td>
+        <td class="px-4 py-3 text-sm">${r.class} - ${r.section}</td>
+        <td class="px-4 py-3 text-sm capitalize">${r.examType}</td>
+        <td class="px-4 py-3 text-sm font-semibold">${r.totalObtainedMarks}/${r.totalMaxMarks}</td>
+        <td class="px-4 py-3 text-sm font-semibold">${r.percentage}%</td>
+        <td class="px-4 py-3"><span class="badge ${gradeColor[r.grade] || 'badge-gray'}">${r.grade}</span></td>
+        <td class="px-4 py-3 text-sm text-center">${r.rank || '-'}</td>
+        <td class="px-4 py-3"><span class="badge ${r.status==='pass'?'badge-green':'badge-red'}">${r.status}</span></td>
+        <td class="px-4 py-3">
+          <div class="flex gap-1">
+            <button onclick="showCard('${r._id}')" class="btn btn-secondary !py-1 !px-2 text-xs"><i class="fas fa-id-card"></i></button>
+            <button onclick="deleteResult('${r._id}')" class="btn btn-danger !py-1 !px-2 text-xs"><i class="fas fa-trash"></i></button>
+          </div>
+        </td>
+      </tr>`).join('');
+  }
+
+  function openModal() {
+    document.getElementById('res-studentId').value = '';
+    document.getElementById('res-exam').value = document.getElementById('rExam').value || 'unit-test';
+    document.getElementById('res-class').value = document.getElementById('rClass').value || 'Class 1';
+    document.getElementById('res-section').value = document.getElementById('rSection').value || 'A';
+    document.getElementById('res-year').value = document.getElementById('rYear').value.trim() || getCurrentAcademicYear();
+    document.getElementById('res-remarks').value = '';
+    document.getElementById('subjectRows').innerHTML = defaultSubjectRows;
+    showModal('resultModal');
+    window.setTimeout(() => document.getElementById('res-studentId')?.focus(), 50);
+  }
+
+  function addSubjectRow() {
+    const row = document.createElement('div');
+    row.className = 'grid grid-cols-12 gap-2 items-center';
+    row.innerHTML = `<div class="col-span-5"><input type="text" class="input sub-name" placeholder="Subject"></div>
+      <div class="col-span-3"><input type="number" class="input sub-max" value="100" min="1"></div>
+      <div class="col-span-3"><input type="number" class="input sub-obtained" min="0"></div>
+      <div class="col-span-1"><button type="button" onclick="this.closest('.grid').remove()" class="btn btn-danger !py-2 !px-2 text-xs"><i class="fas fa-times"></i></button></div>`;
+    document.getElementById('subjectRows').appendChild(row);
+  }
+
+  async function saveResult() {
+    const studentId = document.getElementById('res-studentId').value;
+    if (!studentId) return showToast('Select a student', 'error');
+
+    const names = [...document.querySelectorAll('.sub-name')].map(i => i.value);
+    const maxes = [...document.querySelectorAll('.sub-max')].map(i => Number(i.value));
+    const obtained = [...document.querySelectorAll('.sub-obtained')].map(i => Number(i.value));
+    const subjects = names.map((n, i) => ({ name: n, maxMarks: maxes[i], obtainedMarks: obtained[i] })).filter(s => s.name);
+    if (!subjects.length) return showToast('Add at least one subject', 'error');
+    const data = {
+      studentId,
+      examType: document.getElementById('res-exam').value,
+      class: document.getElementById('res-class').value,
+      section: document.getElementById('res-section').value,
+      academicYear: document.getElementById('res-year').value,
+      subjects,
+      remarks: document.getElementById('res-remarks').value
+    };
+    try {
+      await api.post('/results', data);
+      showToast('Result saved!', 'success');
+      hideModal('resultModal');
+      document.getElementById('rClass').value = data.class;
+      document.getElementById('rSection').value = data.section;
+      document.getElementById('rExam').value = data.examType;
+      document.getElementById('rYear').value = data.academicYear;
+      loadResults();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  async function showCard(id) {
+    try {
+      const res = await api.get(`/results/${id}`);
+      const r = res.data;
+      const s = r.studentId;
+      const gradeColor = { 'A+':'text-green-600', 'A':'text-green-600', 'B+':'text-blue-600', 'B':'text-blue-600', 'C':'text-yellow-600', 'D':'text-orange-600', 'F':'text-red-600' };
+      document.getElementById('cardContent').innerHTML = `
+        <div class="text-center border-b pb-4 mb-4">
+          <h2 class="text-xl font-bold">Bright Future School</h2>
+          <p class="text-gray-500 text-sm">Report Card - ${r.examType.replace('-', ' ').toUpperCase()}</p>
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-sm mb-4 bg-gray-50 p-3 rounded-xl">
+          <div><span class="text-gray-400">Name:</span> <strong>${s?.name || '-'}</strong></div>
+          <div><span class="text-gray-400">ID:</span> <strong>${s?.studentId || '-'}</strong></div>
+          <div><span class="text-gray-400">Class:</span> <strong>${r.class} - ${r.section}</strong></div>
+          <div><span class="text-gray-400">Academic Year:</span> <strong>${r.academicYear}</strong></div>
+          <div><span class="text-gray-400">Roll No:</span> <strong>${s?.rollNo || '-'}</strong></div>
+          <div><span class="text-gray-400">Parent:</span> <strong>${s?.parentName || '-'}</strong></div>
+        </div>
+        <table class="w-full text-sm mb-4">
+          <thead class="bg-blue-600 text-white"><tr>
+            <th class="text-left px-3 py-2">Subject</th>
+            <th class="text-center px-3 py-2">Max</th>
+            <th class="text-center px-3 py-2">Obtained</th>
+            <th class="text-center px-3 py-2">Grade</th>
+          </tr></thead>
+          <tbody class="divide-y divide-gray-100">
+            ${r.subjects.map(sub => `<tr>
+              <td class="px-3 py-2 font-medium">${sub.name}</td>
+              <td class="px-3 py-2 text-center">${sub.maxMarks}</td>
+              <td class="px-3 py-2 text-center font-semibold">${sub.obtainedMarks}</td>
+              <td class="px-3 py-2 text-center font-bold ${gradeColor[sub.grade] || ''}">${sub.grade}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+        <div class="bg-gray-50 rounded-xl p-3 grid grid-cols-4 gap-3 text-center text-sm">
+          <div><div class="font-bold text-gray-800">${r.totalObtainedMarks}/${r.totalMaxMarks}</div><div class="text-xs text-gray-400">Total Marks</div></div>
+          <div><div class="font-bold text-gray-800">${r.percentage}%</div><div class="text-xs text-gray-400">Percentage</div></div>
+          <div><div class="font-bold text-2xl ${gradeColor[r.grade] || ''}">${r.grade}</div><div class="text-xs text-gray-400">Grade</div></div>
+          <div><div class="font-bold ${r.status==='pass'?'text-green-600':'text-red-600'}">${r.status?.toUpperCase()}</div><div class="text-xs text-gray-400">Result</div></div>
+        </div>
+        ${r.remarks ? `<p class="mt-3 text-sm text-gray-600"><strong>Remarks:</strong> ${r.remarks}</p>` : ''}`;
+      showModal('cardModal');
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  async function deleteResult(id) {
+    if (!confirm('Delete this result?')) return;
+    try { await api.delete(`/results/${id}`); showToast('Deleted', 'success'); loadResults(); }
+    catch (err) { showToast(err.message, 'error'); }
+  }
+
+  document.getElementById('res-studentId').addEventListener('change', syncSelectedStudentDetails);
+
+  async function initPage() {
+    document.getElementById('res-year').value = getCurrentAcademicYear();
+    await loadStudentsForResults();
+    document.getElementById('rYear').value = '';
+
+    if (pageAction === 'add') {
+      openModal();
+      if (!resultStudents.length) {
+        showToast('Add a student first before creating a result.', 'info');
+      }
+      clearPageAction();
+    }
+  }
+
+  initPage();
+  window.__pageInlineScriptExecuted = true;
+</script>
+<script src="../js/inline-fallback.js?v=1"></script>
+</body>
+</html>
+

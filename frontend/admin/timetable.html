@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Timetable | School Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-gray-50">
+<div class="flex h-screen overflow-hidden">
+  <div id="sidebar"></div>
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <div id="topbar"></div>
+    <main class="flex-1 overflow-y-auto p-6">
+
+      <!-- Filters -->
+      <div class="flex flex-wrap items-center gap-3 mb-5">
+        <select id="ttClass" class="select w-36" onchange="loadTimetable()">
+          <option value="">Select Class</option>
+          <option value="Class 1">Class 1</option><option value="Class 2">Class 2</option>
+          <option value="Class 3">Class 3</option><option value="Class 4">Class 4</option>
+          <option value="Class 5">Class 5</option><option value="Class 6">Class 6</option>
+          <option value="Class 7">Class 7</option><option value="Class 8">Class 8</option>
+          <option value="Class 9">Class 9</option><option value="Class 10">Class 10</option>
+          <option value="Class 11">Class 11</option><option value="Class 12">Class 12</option>
+        </select>
+        <select id="ttSection" class="select w-28" onchange="loadTimetable()">
+          <option value="">Section</option>
+          <option value="A">A</option><option value="B">B</option>
+          <option value="C">C</option><option value="D">D</option>
+        </select>
+        <span class="text-sm text-gray-400" id="ttStatus"></span>
+      </div>
+
+      <!-- Timetable Grid -->
+      <div id="ttGrid" class="space-y-4">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center text-gray-400">
+          <i class="fas fa-calendar-alt text-4xl mb-3 block"></i>
+          Select a class and section to view the timetable.
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Edit Day Modal -->
+<div id="editDayModal" class="hidden fixed inset-0 bg-black/50 modal-backdrop z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between px-6 py-4 border-b">
+      <h2 class="font-bold text-lg text-gray-800" id="editDayTitle">Edit Timetable</h2>
+      <button onclick="hideModal('editDayModal')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="p-6">
+
+      <!-- Column Headers -->
+      <div class="flex items-center gap-2 px-1 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+        <div style="width:52px" class="text-center">Period</div>
+        <div style="width:110px">Start Time</div>
+        <div style="width:110px">End Time</div>
+        <div class="flex-1">Subject</div>
+        <div style="width:190px">Teacher</div>
+        <div style="width:32px"></div>
+      </div>
+
+      <div id="periodsEditor" class="space-y-2 mb-4"></div>
+      <button onclick="addPeriodRow()" class="btn btn-secondary w-full mt-1"><i class="fas fa-plus"></i> Add Period</button>
+      <div class="flex justify-end gap-3 mt-5">
+        <button onclick="hideModal('editDayModal')" class="btn btn-secondary">Cancel</button>
+        <button onclick="saveDay()" class="btn btn-primary"><i class="fas fa-save"></i> Save Day</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../js/api.js?v=10"></script>
+<script src="../js/auth.js?v=10"></script>
+<script src="../js/layout.js?v=10"></script>
+<script>
+  Auth.requireAuth(['admin']);
+  buildLayout('Timetable', 'admin');
+
+  const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  let currentTimetable = {};
+  let editingDay = null;
+  let teachersList = [];
+
+  // Load teachers for dropdown on page init
+  async function loadTeachers() {
+    try {
+      const res = await api.get('/teachers', { status: 'active', limit: 500 });
+      teachersList = res.data || [];
+    } catch {}
+  }
+
+  async function loadTimetable() {
+    const cls = document.getElementById('ttClass').value;
+    const section = document.getElementById('ttSection').value;
+    if (!cls || !section) return;
+
+    document.getElementById('ttStatus').textContent = 'Loading...';
+    try {
+      const res = await api.get('/timetable', { class: cls, section });
+      currentTimetable = res.data;
+      renderGrid(cls, section);
+      document.getElementById('ttStatus').textContent = '';
+    } catch (err) {
+      showToast(err.message, 'error');
+      document.getElementById('ttStatus').textContent = '';
+    }
+  }
+
+  function renderGrid(cls, section) {
+    const grid = document.getElementById('ttGrid');
+    grid.innerHTML = DAYS.map(day => {
+      const periods = currentTimetable[day] || [];
+      return `
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="flex items-center justify-between px-5 py-3 border-b bg-gray-50">
+            <span class="font-semibold text-gray-700">${day}</span>
+            <button onclick="openEditDay('${day}')" class="btn btn-primary !py-1 !px-3 text-xs"><i class="fas fa-edit"></i> Edit</button>
+          </div>
+          <div class="overflow-x-auto">
+            ${periods.length === 0
+              ? '<p class="text-center text-gray-400 text-sm py-4">No periods scheduled</p>'
+              : `<table class="w-full text-sm">
+                  <thead class="bg-gray-50 text-xs text-gray-500">
+                    <tr>
+                      <th class="text-left px-4 py-2 w-16">Period</th>
+                      <th class="text-left px-4 py-2">Time</th>
+                      <th class="text-left px-4 py-2">Subject</th>
+                      <th class="text-left px-4 py-2">Teacher</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-100">
+                    ${periods.map(p => `
+                      <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-2 font-semibold text-blue-600">P${p.periodNo}</td>
+                        <td class="px-4 py-2 text-gray-600">${p.startTime || '--:--'} – ${p.endTime || '--:--'}</td>
+                        <td class="px-4 py-2 font-medium">${p.subject}</td>
+                        <td class="px-4 py-2 text-gray-500">${p.teacherName || '-'}</td>
+                      </tr>`).join('')}
+                  </tbody>
+                </table>`}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function openEditDay(day) {
+    editingDay = day;
+    document.getElementById('editDayTitle').textContent =
+      `Edit ${day} — ${document.getElementById('ttClass').value} ${document.getElementById('ttSection').value}`;
+    const periods = currentTimetable[day] || [];
+    document.getElementById('periodsEditor').innerHTML = '';
+    if (periods.length === 0) {
+      addPeriodRow();
+    } else {
+      periods.forEach(p => addPeriodRow(p));
+    }
+    showModal('editDayModal');
+  }
+
+  function buildTeacherOptions(selectedId = '') {
+    const blank = `<option value="">-- Select Teacher --</option>`;
+    const options = teachersList.map(t =>
+      `<option value="${t._id}" data-name="${t.name}" ${t._id === selectedId ? 'selected' : ''}>${t.name}</option>`
+    ).join('');
+    return blank + options;
+  }
+
+  function addPeriodRow(p = {}) {
+    const idx = document.getElementById('periodsEditor').children.length + 1;
+    const div = document.createElement('div');
+    div.className = 'flex items-center gap-2 bg-gray-50 rounded-xl p-2';
+    div.innerHTML = `
+      <div style="width:52px">
+        <input type="number" class="input text-center !px-1" placeholder="#" value="${p.periodNo || idx}" min="1" style="width:52px">
+      </div>
+      <div style="width:110px">
+        <input type="time" class="input !px-2" value="${p.startTime || ''}" style="width:110px">
+      </div>
+      <div style="width:110px">
+        <input type="time" class="input !px-2" value="${p.endTime || ''}" style="width:110px">
+      </div>
+      <div class="flex-1">
+        <input type="text" class="input" placeholder="Subject" value="${p.subject || ''}">
+      </div>
+      <div style="width:190px">
+        <select class="select teacher-select" style="width:190px">
+          ${buildTeacherOptions(p.teacherId || '')}
+        </select>
+      </div>
+      <button type="button" onclick="this.closest('.flex').remove()" class="text-red-400 hover:text-red-600 flex-shrink-0" style="width:32px;text-align:center">
+        <i class="fas fa-times"></i>
+      </button>`;
+    document.getElementById('periodsEditor').appendChild(div);
+  }
+
+  async function saveDay() {
+    const cls = document.getElementById('ttClass').value;
+    const section = document.getElementById('ttSection').value;
+    const rows = document.getElementById('periodsEditor').querySelectorAll('.flex.items-center');
+    const periods = [];
+
+    for (const row of rows) {
+      const inputs = row.querySelectorAll('input');
+      const select = row.querySelector('.teacher-select');
+      const periodNo = parseInt(inputs[0].value) || periods.length + 1;
+      const startTime = inputs[1].value;
+      const endTime = inputs[2].value;
+      const subject = inputs[3].value.trim();
+      const teacherId = select?.value || '';
+      const selectedOption = select?.options[select.selectedIndex];
+      const teacherName = selectedOption?.dataset?.name || selectedOption?.text || '';
+
+      if (!subject) continue;
+      periods.push({ periodNo, startTime, endTime, subject, teacherName, teacherId });
+    }
+
+    try {
+      await api.put('/timetable', { class: cls, section, day: editingDay, periods });
+      showToast(`${editingDay} timetable saved!`, 'success');
+      hideModal('editDayModal');
+      loadTimetable();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }
+
+  // Init
+  loadTeachers();
+  window.__pageInlineScriptExecuted = true;
+</script>
+<script src="../js/inline-fallback.js?v=1"></script>
+</body>
+</html>

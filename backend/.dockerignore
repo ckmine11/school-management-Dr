@@ -1,0 +1,6 @@
+node_modules
+npm-debug.log
+.env
+uploads/photos/*.jpg
+uploads/photos/*.png
+uploads/receipts/*.pdf

@@ -1,0 +1,239 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attendance | School Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-gray-50">
+<div class="flex h-screen overflow-hidden">
+  <div id="sidebar"></div>
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <div id="topbar"></div>
+    <main class="flex-1 overflow-y-auto p-6">
+
+      <!-- Controls -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-5">
+        <h2 class="font-bold text-gray-800 mb-4">Mark Attendance</h2>
+        <div class="flex flex-wrap gap-3 items-end">
+          <div>
+            <label class="label">Class *</label>
+            <select id="attClass" class="select w-36">
+              <option value="">Select Class</option>
+              <option value="Class 1">Class 1</option>
+              <option value="Class 2">Class 2</option>
+              <option value="Class 3">Class 3</option>
+              <option value="Class 4">Class 4</option>
+              <option value="Class 5">Class 5</option>
+              <option value="Class 6">Class 6</option>
+              <option value="Class 7">Class 7</option>
+              <option value="Class 8">Class 8</option>
+              <option value="Class 9">Class 9</option>
+              <option value="Class 10">Class 10</option>
+              <option value="Class 11">Class 11</option>
+              <option value="Class 12">Class 12</option>
+            </select>
+          </div>
+          <div>
+            <label class="label">Section *</label>
+            <select id="attSection" class="select w-28">
+              <option value="">Section</option>
+              <option>A</option><option>B</option><option>C</option><option>D</option>
+            </select>
+          </div>
+          <div>
+            <label class="label">Date *</label>
+            <input type="date" id="attDate" class="input w-40">
+          </div>
+          <button onclick="loadStudentsForAttendance()" class="btn btn-primary"><i class="fas fa-search"></i> Load Students</button>
+        </div>
+      </div>
+
+      <!-- Attendance Table -->
+      <div id="attSection2" class="hidden bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b">
+          <div>
+            <h2 class="font-bold text-gray-800">Student Attendance</h2>
+            <p class="text-sm text-gray-500" id="attInfo"></p>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="markAll('present')" class="btn btn-success !py-1 !px-3 text-xs"><i class="fas fa-check"></i> All Present</button>
+            <button onclick="markAll('absent')" class="btn btn-danger !py-1 !px-3 text-xs"><i class="fas fa-times"></i> All Absent</button>
+            <button onclick="submitAttendance()" class="btn btn-primary"><i class="fas fa-save"></i> Save</button>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th class="text-left px-4 py-3 text-gray-500">#</th>
+                <th class="text-left px-4 py-3 text-gray-500">Student</th>
+                <th class="text-left px-4 py-3 text-gray-500">Roll No</th>
+                <th class="text-left px-4 py-3 text-gray-500">Status</th>
+                <th class="text-left px-4 py-3 text-gray-500">Remarks</th>
+              </tr>
+            </thead>
+            <tbody id="attTable" class="divide-y divide-gray-100"></tbody>
+          </table>
+        </div>
+        <!-- Summary bar -->
+        <div class="px-5 py-3 bg-gray-50 border-t flex gap-4 text-sm">
+          <span class="text-green-600 font-semibold"><i class="fas fa-check-circle mr-1"></i>Present: <span id="cnt-present">0</span></span>
+          <span class="text-red-500 font-semibold"><i class="fas fa-times-circle mr-1"></i>Absent: <span id="cnt-absent">0</span></span>
+          <span class="text-yellow-500 font-semibold"><i class="fas fa-clock mr-1"></i>Late: <span id="cnt-late">0</span></span>
+        </div>
+      </div>
+
+      <!-- Monthly Report -->
+      <div class="mt-5 bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+        <h2 class="font-bold text-gray-800 mb-4">Monthly Report</h2>
+        <div class="flex flex-wrap gap-3 items-end mb-4">
+          <div>
+            <label class="label">Student ID</label>
+            <input type="text" id="rptStudentId" class="input w-36" placeholder="Student _id">
+          </div>
+          <div>
+            <label class="label">Month</label>
+            <input type="number" id="rptMonth" class="input w-20" min="1" max="12">
+          </div>
+          <div>
+            <label class="label">Year</label>
+            <input type="number" id="rptYear" class="input w-24">
+          </div>
+          <button onclick="loadReport()" class="btn btn-secondary"><i class="fas fa-chart-bar"></i> Generate</button>
+        </div>
+        <div id="reportArea" class="hidden">
+          <div class="grid grid-cols-4 gap-3 mb-4" id="reportSummary"></div>
+          <div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-gray-50"><tr><th class="text-left px-3 py-2 text-gray-500">Date</th><th class="text-left px-3 py-2 text-gray-500">Status</th><th class="text-left px-3 py-2 text-gray-500">Remarks</th></tr></thead><tbody id="reportTable"></tbody></table></div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script src="../js/api.js?v=10"></script>
+<script src="../js/auth.js?v=10"></script>
+<script src="../js/layout.js?v=10"></script>
+<script>
+  Auth.requireAuth(['admin', 'teacher']);
+  buildLayout('Attendance', 'admin');
+  const pageAction = new URLSearchParams(window.location.search).get('action');
+
+  function clearPageAction() {
+    if (!window.location.search) return;
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+
+  // Initialize date, month, and year dynamic defaults
+  document.getElementById('attDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('rptMonth').value = new Date().getMonth() + 1;
+  document.getElementById('rptYear').value = new Date().getFullYear();
+
+  let studentsForAtt = [];
+
+  async function loadStudentsForAttendance() {
+    const cls = document.getElementById('attClass').value;
+    const section = document.getElementById('attSection').value;
+    const date = document.getElementById('attDate').value;
+    if (!cls || !section || !date) return showToast('Please select class, section, and date', 'error');
+    try {
+      const [studRes, existRes] = await Promise.all([
+        api.get('/students', { class: cls, section, status: 'active', limit: 200 }),
+        api.get('/attendance', { class: cls, section, date })
+      ]);
+      studentsForAtt = studRes.data;
+      const existingMap = {};
+      existRes.data.forEach(r => { existingMap[r.studentId?._id || r.studentId] = r; });
+
+      document.getElementById('attSection2').classList.remove('hidden');
+      document.getElementById('attInfo').textContent = `${cls} - ${section} | ${new Date(date).toLocaleDateString('en-IN')} | ${studentsForAtt.length} students`;
+
+      const tb = document.getElementById('attTable');
+      tb.innerHTML = studentsForAtt.map((s, i) => {
+        const existing = existingMap[s._id];
+        const status = existing?.status || 'present';
+        return `<tr class="hover:bg-gray-50">
+          <td class="px-4 py-2 text-sm text-gray-400">${i + 1}</td>
+          <td class="px-4 py-2">
+            <div class="font-semibold text-sm text-gray-800">${s.name}</div>
+            <div class="text-xs text-gray-400">${s.studentId}</div>
+          </td>
+          <td class="px-4 py-2 text-sm">${s.rollNo || '-'}</td>
+          <td class="px-4 py-2">
+            <select class="att-status select !w-auto text-xs" data-id="${s._id}" onchange="updateCounts()">
+              <option value="present" ${status==='present'?'selected':''}>Present</option>
+              <option value="absent" ${status==='absent'?'selected':''}>Absent</option>
+              <option value="late" ${status==='late'?'selected':''}>Late</option>
+              <option value="holiday" ${status==='holiday'?'selected':''}>Holiday</option>
+            </select>
+          </td>
+          <td class="px-4 py-2"><input type="text" class="att-remark input !text-xs !py-1" data-id="${s._id}" value="${existing?.remarks||''}" placeholder="Optional"></td>
+        </tr>`;
+      }).join('');
+      updateCounts();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  function markAll(status) {
+    document.querySelectorAll('.att-status').forEach(s => s.value = status);
+    updateCounts();
+  }
+
+  function updateCounts() {
+    const statuses = [...document.querySelectorAll('.att-status')].map(s => s.value);
+    document.getElementById('cnt-present').textContent = statuses.filter(s => s === 'present').length;
+    document.getElementById('cnt-absent').textContent = statuses.filter(s => s === 'absent').length;
+    document.getElementById('cnt-late').textContent = statuses.filter(s => s === 'late').length;
+  }
+
+  async function submitAttendance() {
+    const cls = document.getElementById('attClass').value;
+    const section = document.getElementById('attSection').value;
+    const date = document.getElementById('attDate').value;
+    const records = [...document.querySelectorAll('.att-status')].map(sel => ({
+      studentId: sel.dataset.id,
+      status: sel.value,
+      remarks: document.querySelector(`.att-remark[data-id="${sel.dataset.id}"]`)?.value || ''
+    }));
+    try {
+      await api.post('/attendance/mark', { class: cls, section, date, records });
+      showToast('Attendance saved! Absent parents notified.', 'success');
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  async function loadReport() {
+    const studentId = document.getElementById('rptStudentId').value.trim();
+    const month = document.getElementById('rptMonth').value;
+    const year = document.getElementById('rptYear').value;
+    if (!studentId) return showToast('Enter a student ID', 'error');
+    try {
+      const res = await api.get(`/attendance/report/${studentId}`, { month, year });
+      document.getElementById('reportArea').classList.remove('hidden');
+      const s = res.summary;
+      document.getElementById('reportSummary').innerHTML = `
+        <div class="bg-gray-50 p-3 rounded-xl text-center"><div class="text-2xl font-bold text-gray-700">${s.total}</div><div class="text-xs text-gray-500">Total Days</div></div>
+        <div class="bg-green-50 p-3 rounded-xl text-center"><div class="text-2xl font-bold text-green-600">${s.present}</div><div class="text-xs text-gray-500">Present</div></div>
+        <div class="bg-red-50 p-3 rounded-xl text-center"><div class="text-2xl font-bold text-red-500">${s.absent}</div><div class="text-xs text-gray-500">Absent</div></div>
+        <div class="bg-blue-50 p-3 rounded-xl text-center"><div class="text-2xl font-bold text-blue-600">${s.percentage}%</div><div class="text-xs text-gray-500">Attendance</div></div>`;
+      const statusBadge = { present: 'badge-green', absent: 'badge-red', late: 'badge-yellow', holiday: 'badge-blue' };
+      document.getElementById('reportTable').innerHTML = res.data.map(r => `
+        <tr class="border-b border-gray-100"><td class="px-3 py-2">${formatDate(r.date)}</td>
+        <td class="px-3 py-2"><span class="badge ${statusBadge[r.status]}">${r.status}</span></td>
+        <td class="px-3 py-2 text-gray-500">${r.remarks || '-'}</td></tr>`).join('');
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  if (pageAction === 'mark') {
+    document.getElementById('attClass').focus();
+    showToast('Select class, section, and date to start marking attendance.', 'info');
+    clearPageAction();
+  }
+  window.__pageInlineScriptExecuted = true;
+</script>
+<script src="../js/inline-fallback.js?v=1"></script>
+</body>
+</html>
+

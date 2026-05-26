@@ -1,0 +1,347 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teachers | School Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-gray-50">
+<div class="flex h-screen overflow-hidden">
+  <div id="sidebar"></div>
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <div id="topbar"></div>
+    <main class="flex-1 overflow-y-auto p-6">
+
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <div class="flex gap-2">
+          <input type="text" id="searchInput" class="input w-52" placeholder="Search by name or subject...">
+          <select id="statusFilter" class="select w-28" onchange="loadTeachers()">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+          <button class="btn btn-secondary" onclick="loadTeachers()"><i class="fas fa-search"></i></button>
+        </div>
+        <button class="btn btn-primary" onclick="openModal()"><i class="fas fa-plus"></i> Add Teacher</button>
+      </div>
+
+      <!-- Teacher Cards -->
+      <div id="teacherGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div class="col-span-full text-center py-10 text-gray-400"><i class="fas fa-spinner fa-spin text-2xl"></i></div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div id="teacherModal" class="hidden fixed inset-0 bg-black/50 modal-backdrop z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between px-6 py-4 border-b">
+      <h2 class="font-bold text-lg text-gray-800" id="modalTitle">Add Teacher</h2>
+      <button onclick="hideModal('teacherModal')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"><i class="fas fa-times"></i></button>
+    </div>
+    <form id="teacherForm" onsubmit="saveTeacher(event)" class="p-6">
+      <input type="hidden" id="teacherId">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div><label class="label">Full Name *</label><input type="text" id="t-name" class="input" required></div>
+        <div><label class="label">Teacher Login Email *</label><input type="email" id="t-email" class="input" required></div>
+        <div><label class="label">Phone (WhatsApp)</label><input type="tel" id="t-phone" class="input"></div>
+        <div><label class="label">Date of Birth</label><input type="date" id="t-dob" class="input"></div>
+        <div>
+          <label class="label">Gender</label>
+          <select id="t-gender" class="select">
+            <option value="">Select</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option>
+          </select>
+        </div>
+        <div><label class="label">Qualification</label><input type="text" id="t-qualification" class="input" placeholder="e.g., B.Ed, M.Sc"></div>
+        <div><label class="label">Experience (years)</label><input type="number" id="t-experience" class="input" min="0"></div>
+        <div><label class="label">Salary</label><input type="number" id="t-salary" class="input" min="0"></div>
+        <div class="sm:col-span-2">
+          <label class="label">Subjects (comma separated)</label>
+          <input type="text" id="t-subjects" class="input" placeholder="e.g., Mathematics, Physics">
+        </div>
+        <div class="sm:col-span-2">
+          <label class="label">Assigned Classes &amp; Sections</label>
+          <div class="border border-gray-200 rounded-xl overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead class="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th class="text-left px-3 py-2 text-gray-500 font-medium">Class</th>
+                    <th class="px-3 py-2 text-gray-500 font-medium text-center">A</th>
+                    <th class="px-3 py-2 text-gray-500 font-medium text-center">B</th>
+                    <th class="px-3 py-2 text-gray-500 font-medium text-center">C</th>
+                    <th class="px-3 py-2 text-gray-500 font-medium text-center">D</th>
+                  </tr>
+                </thead>
+                <tbody id="classCheckboxGrid" class="divide-y divide-gray-100"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="sm:col-span-2"><label class="label">Address</label><input type="text" id="t-address" class="input"></div>
+        <div>
+          <label class="label">Join Date</label>
+          <input type="date" id="t-joinDate" class="input">
+        </div>
+        <div>
+          <label class="label">Status</label>
+          <select id="t-status" class="select">
+            <option value="active">Active</option><option value="inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex justify-end gap-3 mt-6">
+        <button type="button" onclick="hideModal('teacherModal')" class="btn btn-secondary">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Teacher</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="teacherProfileModal" class="hidden fixed inset-0 bg-black/50 modal-backdrop z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+    <div class="flex items-center justify-between px-6 py-4 border-b">
+      <h2 class="font-bold text-lg text-gray-800">Teacher Profile</h2>
+      <button onclick="hideModal('teacherProfileModal')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"><i class="fas fa-times"></i></button>
+    </div>
+    <div id="teacherProfileContent" class="p-6"></div>
+  </div>
+</div>
+
+<div id="credentialModal" class="hidden fixed inset-0 bg-black/50 modal-backdrop z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl">
+    <div class="flex items-center justify-between px-6 py-4 border-b">
+      <h2 class="font-bold text-lg text-gray-800" id="credentialTitle">Temporary Credentials</h2>
+      <button onclick="hideModal('credentialModal')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="p-6">
+      <p class="text-sm text-gray-500 mb-4">Share these temporary credentials securely. The user will be prompted to set a new password after signing in.</p>
+      <div id="credentialContent" class="space-y-3"></div>
+      <div class="flex justify-end mt-6">
+        <button type="button" onclick="hideModal('credentialModal')" class="btn btn-primary">Done</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../js/api.js?v=10"></script>
+<script src="../js/auth.js?v=10"></script>
+<script src="../js/layout.js?v=10"></script>
+<script>
+  Auth.requireAuth(['admin']);
+  buildLayout('Teachers', 'admin');
+
+  const CLASSES = ['Class 1','Class 2','Class 3','Class 4','Class 5','Class 6','Class 7','Class 8','Class 9','Class 10','Class 11','Class 12'];
+  const SECTIONS = ['A','B','C','D'];
+
+  function buildClassGrid(assignedClasses = []) {
+    const grid = document.getElementById('classCheckboxGrid');
+    const assignedSet = new Set((assignedClasses || []).map(a => `${a.class}|${a.section}`));
+    grid.innerHTML = CLASSES.map(cls => `
+      <tr class="hover:bg-gray-50">
+        <td class="px-3 py-2 text-gray-700 font-medium whitespace-nowrap">${cls}</td>
+        ${SECTIONS.map(sec => `
+          <td class="px-3 py-2 text-center">
+            <input type="checkbox" class="assigned-class-cb w-4 h-4 accent-green-600 cursor-pointer"
+              data-class="${cls}" data-section="${sec}"
+              ${assignedSet.has(`${cls}|${sec}`) ? 'checked' : ''}>
+          </td>`).join('')}
+      </tr>`).join('');
+  }
+
+  function getAssignedClasses() {
+    return [...document.querySelectorAll('.assigned-class-cb:checked')].map(cb => ({
+      class: cb.dataset.class,
+      section: cb.dataset.section
+    }));
+  }
+
+  const pageAction = new URLSearchParams(window.location.search).get('action');
+  let teachers = [];
+
+  function clearPageAction() {
+    if (!window.location.search) return;
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+
+  async function loadTeachers() {
+    const search = document.getElementById('searchInput').value;
+    const status = document.getElementById('statusFilter').value;
+    const params = {};
+    if (search) params.search = search;
+    if (status) params.status = status;
+    try {
+      const res = await api.get('/teachers', params);
+      teachers = res.data;
+      renderGrid(teachers);
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  function renderGrid(data) {
+    const grid = document.getElementById('teacherGrid');
+    if (!data.length) {
+      grid.innerHTML = '<div class="col-span-full text-center py-10 text-gray-400">No teachers found</div>';
+      return;
+    }
+    grid.innerHTML = data.map(t => `
+      <div class="card bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center">
+        <div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center text-2xl font-bold text-green-600 mx-auto mb-3">${t.name[0].toUpperCase()}</div>
+        <h3 class="font-bold text-gray-800">${t.name}</h3>
+        <p class="text-xs text-green-600 font-mono mb-2">${t.teacherId}</p>
+        <div class="flex flex-wrap gap-1 justify-center mb-3">
+          ${(t.subjects || []).map(s => `<span class="badge badge-blue">${s}</span>`).join('')}
+        </div>
+        <div class="text-xs text-gray-500 mb-1"><i class="fas fa-phone mr-1"></i>${t.phone || 'No phone'}</div>
+        <div class="text-xs text-gray-500 mb-3"><i class="fas fa-graduation-cap mr-1"></i>${t.qualification || '-'} â€¢ ${t.experience || 0} yrs</div>
+        <span class="badge ${t.status === 'active' ? 'badge-green' : 'badge-red'} mb-3">${t.status}</span>
+        <div class="flex gap-2 justify-center">
+          <button onclick="viewTeacher('${t._id}')" class="btn btn-secondary !py-1 !px-3 text-xs"><i class="fas fa-eye"></i></button>
+          <button onclick="editTeacher('${t._id}')" class="btn btn-secondary !py-1 !px-3 text-xs flex-1"><i class="fas fa-edit"></i> Edit</button>
+          <button onclick="deleteTeacher('${t._id}','${t.name}')" class="btn btn-danger !py-1 !px-3 text-xs"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>`).join('');
+  }
+
+  function openModal(data = null) {
+    document.getElementById('teacherId').value = data?._id || '';
+    document.getElementById('modalTitle').textContent = data ? 'Edit Teacher' : 'Add Teacher';
+    document.getElementById('t-name').value = data?.name || '';
+    document.getElementById('t-email').value = data?.email || '';
+    document.getElementById('t-phone').value = data?.phone || '';
+    document.getElementById('t-dob').value = data?.dob ? data.dob.split('T')[0] : '';
+    document.getElementById('t-gender').value = data?.gender || '';
+    document.getElementById('t-qualification').value = data?.qualification || '';
+    document.getElementById('t-experience').value = data?.experience || '';
+    document.getElementById('t-salary').value = data?.salary || '';
+    document.getElementById('t-subjects').value = (data?.subjects || []).join(', ');
+    document.getElementById('t-address').value = data?.address || '';
+    document.getElementById('t-joinDate').value = data?.joinDate ? data.joinDate.split('T')[0] : '';
+    document.getElementById('t-status').value = data?.status || 'active';
+    buildClassGrid(data?.assignedClasses || []);
+    showModal('teacherModal');
+    window.setTimeout(() => document.getElementById('t-name')?.focus(), 50);
+  }
+
+  function editTeacher(id) {
+    const t = teachers.find(x => x._id === id);
+    if (t) openModal(t);
+  }
+
+  function openCredentialModal(title, credentials) {
+    const account = credentials?.teacher;
+    if (!account?.email || !account?.temporaryPassword) return false;
+
+    document.getElementById('credentialTitle').textContent = title;
+    document.getElementById('credentialContent').innerHTML = `
+      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <p class="text-sm font-semibold text-slate-800">Teacher Login</p>
+        <p class="text-xs text-slate-500 mt-1">Email</p>
+        <p class="font-mono text-sm text-blue-700 break-all">${account.email}</p>
+        <p class="text-xs text-slate-500 mt-3">Temporary Password</p>
+        <p class="font-mono text-base font-bold text-slate-900">${account.temporaryPassword}</p>
+      </div>`;
+
+    showModal('credentialModal');
+    return true;
+  }
+
+  async function viewTeacher(id) {
+    try {
+      const res = await api.get(`/teachers/${id}`);
+      const t = res.data;
+      document.getElementById('teacherProfileContent').innerHTML = `
+        <div class="flex items-center gap-4 mb-5">
+          <div class="w-16 h-16 rounded-2xl bg-green-100 flex items-center justify-center text-2xl font-bold text-green-600">${t.name[0].toUpperCase()}</div>
+          <div>
+            <h3 class="text-xl font-bold text-gray-800">${t.name}</h3>
+            <p class="text-green-600 font-mono text-sm">${t.teacherId}</p>
+            <span class="badge ${t.status === 'active' ? 'badge-green' : 'badge-red'} mt-1">${t.status}</span>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3 text-sm">
+          <div class="bg-gray-50 p-3 rounded-xl"><span class="text-gray-400 block text-xs">Email</span><span class="font-semibold break-all">${t.email || '-'}</span></div>
+          <div class="bg-gray-50 p-3 rounded-xl"><span class="text-gray-400 block text-xs">Phone</span><span class="font-semibold">${t.phone || '-'}</span></div>
+          <div class="bg-gray-50 p-3 rounded-xl"><span class="text-gray-400 block text-xs">Qualification</span><span class="font-semibold">${t.qualification || '-'}</span></div>
+          <div class="bg-gray-50 p-3 rounded-xl"><span class="text-gray-400 block text-xs">Experience</span><span class="font-semibold">${t.experience || 0} years</span></div>
+          <div class="bg-gray-50 p-3 rounded-xl col-span-2"><span class="text-gray-400 block text-xs">Subjects</span><span class="font-semibold">${(t.subjects || []).join(', ') || '-'}</span></div>
+          <div class="bg-amber-50 p-3 rounded-xl col-span-2 border border-amber-100">
+            <span class="text-amber-600 block text-xs font-bold mb-1">Login Account</span>
+            <p class="text-sm text-gray-700">${t.loginAccount?.email || t.email || '-'}</p>
+            <p class="text-xs text-gray-500 mt-1">Status: ${t.loginAccount?.isActive ? 'Active' : 'Inactive'} | Password update: ${t.loginAccount?.mustChangePassword ? 'Pending' : 'Completed'} | Last login: ${formatDateTime(t.loginAccount?.lastLogin)}</p>
+            <div class="flex flex-wrap gap-2 mt-3">
+              <button onclick="resetTeacherLogin('${t._id}', '${t.name.replace(/'/g, "\\'")}')" class="btn btn-secondary !py-1.5 !px-3 text-xs"><i class="fas fa-key"></i> Reset Login</button>
+            </div>
+          </div>
+        </div>`;
+      showModal('teacherProfileModal');
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }
+
+  async function saveTeacher(e) {
+    e.preventDefault();
+    const id = document.getElementById('teacherId').value;
+    const data = {
+      name: document.getElementById('t-name').value,
+      email: document.getElementById('t-email').value,
+      phone: document.getElementById('t-phone').value,
+      dob: document.getElementById('t-dob').value,
+      gender: document.getElementById('t-gender').value,
+      qualification: document.getElementById('t-qualification').value,
+      experience: document.getElementById('t-experience').value,
+      salary: document.getElementById('t-salary').value,
+      subjects: document.getElementById('t-subjects').value,
+      address: document.getElementById('t-address').value,
+      joinDate: document.getElementById('t-joinDate').value,
+      status: document.getElementById('t-status').value,
+      assignedClasses: JSON.stringify(getAssignedClasses())
+    };
+    try {
+      const res = id ? await api.put(`/teachers/${id}`, data) : await api.post('/teachers', data);
+      hideModal('teacherModal');
+      showToast(id ? 'Teacher updated successfully' : 'Teacher added successfully', 'success');
+      openCredentialModal(id ? 'New temporary credentials issued' : 'Temporary credentials issued', res.credentials);
+      loadTeachers();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  async function resetTeacherLogin(id, name) {
+    if (!confirm(`Reset the login password for "${name}"? A new temporary password will be generated.`)) return;
+
+    try {
+      const res = await api.post(`/teachers/${id}/reset-login`, {});
+      hideModal('teacherProfileModal');
+      showToast('Teacher login reset successfully', 'success');
+      openCredentialModal('Temporary teacher credentials', res.credentials);
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }
+
+  async function deleteTeacher(id, name) {
+    if (!confirm(`Delete teacher "${name}"? This cannot be undone.`)) return;
+    try {
+      await api.delete(`/teachers/${id}`);
+      showToast('Teacher deleted', 'success');
+      loadTeachers();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  buildClassGrid();
+  document.getElementById('searchInput').addEventListener('keyup', (e) => { if (e.key === 'Enter') loadTeachers(); });
+  loadTeachers();
+  if (pageAction === 'add') {
+    openModal();
+    clearPageAction();
+  }
+  window.__pageInlineScriptExecuted = true;
+</script>
+<script src="../js/inline-fallback.js?v=1"></script>
+</body>
+</html>
+

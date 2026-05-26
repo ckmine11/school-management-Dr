@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gallery | School Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-gray-50">
+<div class="flex h-screen overflow-hidden">
+  <div id="sidebar"></div>
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <div id="topbar"></div>
+    <main class="flex-1 overflow-y-auto p-6">
+
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <div class="flex gap-2">
+          <select id="catFilter" class="select w-36" onchange="loadGallery()">
+            <option value="">All Categories</option>
+            <option value="sports">Sports</option>
+            <option value="academics">Academics</option>
+            <option value="events">Events</option>
+            <option value="campus">Campus</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="showModal('uploadModal')"><i class="fas fa-upload"></i> Upload Image</button>
+      </div>
+
+      <div id="galleryGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        <div class="col-span-full text-center py-10 text-gray-400"><i class="fas fa-spinner fa-spin text-2xl"></i></div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- Upload Modal -->
+<div id="uploadModal" class="hidden fixed inset-0 bg-black/50 modal-backdrop z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+    <div class="flex items-center justify-between px-6 py-4 border-b">
+      <h2 class="font-bold text-lg text-gray-800">Upload Gallery Image</h2>
+      <button onclick="hideModal('uploadModal')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"><i class="fas fa-times"></i></button>
+    </div>
+    <form id="uploadForm" onsubmit="uploadImage(event)" class="p-6 space-y-4">
+      <div>
+        <label class="label">Title *</label>
+        <input type="text" id="img-title" class="input" placeholder="e.g. Annual Sports Day" required>
+      </div>
+      <div>
+        <label class="label">Category *</label>
+        <select id="img-category" class="select" required>
+          <option value="">Select Category</option>
+          <option value="sports">Sports</option>
+          <option value="academics">Academics</option>
+          <option value="events">Events</option>
+          <option value="campus">Campus</option>
+        </select>
+      </div>
+      <div>
+        <label class="label">Image *</label>
+        <input type="file" id="img-file" accept="image/*" class="input" required onchange="previewImage(event)">
+        <div id="imgPreview" class="mt-3 hidden">
+          <img id="previewImg" class="w-full max-h-48 object-cover rounded-xl border border-gray-200">
+        </div>
+      </div>
+      <div class="flex justify-end gap-3 pt-2">
+        <button type="button" onclick="hideModal('uploadModal')" class="btn btn-secondary">Cancel</button>
+        <button type="submit" id="uploadBtn" class="btn btn-primary"><i class="fas fa-upload"></i> Upload</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="../js/api.js?v=10"></script>
+<script src="../js/auth.js?v=10"></script>
+<script src="../js/layout.js?v=10"></script>
+<script>
+  Auth.requireAuth(['admin']);
+  buildLayout('Gallery', 'admin');
+
+  const CATEGORY_LABELS = { sports: 'Sports', academics: 'Academics', events: 'Events', campus: 'Campus' };
+  const CATEGORY_COLORS = { sports: 'badge-green', academics: 'badge-blue', events: 'badge-yellow', campus: 'badge-gray' };
+
+  async function loadGallery() {
+    const cat = document.getElementById('catFilter').value;
+    const params = cat ? { category: cat } : {};
+    const grid = document.getElementById('galleryGrid');
+    grid.innerHTML = '<div class="col-span-full text-center py-10 text-gray-400"><i class="fas fa-spinner fa-spin text-2xl"></i></div>';
+    try {
+      const res = await api.get('/gallery', params);
+      if (!res.data.length) {
+        grid.innerHTML = '<div class="col-span-full text-center py-16 text-gray-400"><i class="fas fa-images text-4xl mb-3 block"></i>No images yet. Click "Upload Image" to add.</div>';
+        return;
+      }
+      grid.innerHTML = res.data.map(item => `
+        <div class="group relative bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition">
+          <div class="aspect-square overflow-hidden bg-gray-100">
+            <img src="/uploads/gallery/${item.image}" alt="${item.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.parentElement.innerHTML='<div class=\'flex items-center justify-center h-full text-gray-300\'><i class=\'fas fa-image text-4xl\'></i></div>'">
+          </div>
+          <div class="p-3">
+            <p class="text-sm font-semibold text-gray-800 truncate" title="${item.title}">${item.title}</p>
+            <div class="flex items-center justify-between mt-2">
+              <span class="badge ${CATEGORY_COLORS[item.category] || 'badge-gray'} text-xs">${CATEGORY_LABELS[item.category] || item.category}</span>
+              <button onclick="deleteImage('${item._id}', '${item.title.replace(/'/g, "\\'")}')" class="text-red-400 hover:text-red-600 transition text-sm"><i class="fas fa-trash"></i></button>
+            </div>
+          </div>
+        </div>`).join('');
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }
+
+  function previewImage(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      document.getElementById('previewImg').src = ev.target.result;
+      document.getElementById('imgPreview').classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function uploadImage(e) {
+    e.preventDefault();
+    const btn = document.getElementById('uploadBtn');
+    const file = document.getElementById('img-file').files[0];
+    if (!file) { showToast('Please select an image', 'error'); return; }
+
+    const formData = new FormData();
+    formData.append('title', document.getElementById('img-title').value);
+    formData.append('category', document.getElementById('img-category').value);
+    formData.append('image', file);
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+    try {
+      await api.post('/gallery', formData, true);
+      hideModal('uploadModal');
+      showToast('Image uploaded successfully', 'success');
+      document.getElementById('uploadForm').reset();
+      document.getElementById('imgPreview').classList.add('hidden');
+      loadGallery();
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-upload"></i> Upload';
+    }
+  }
+
+  async function deleteImage(id, title) {
+    if (!confirm(`Delete "${title}" from gallery?`)) return;
+    try {
+      await api.delete(`/gallery/${id}`);
+      showToast('Image deleted', 'success');
+      loadGallery();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }
+
+  loadGallery();
+  window.__pageInlineScriptExecuted = true;
+</script>
+<script src="../js/inline-fallback.js?v=1"></script>
+</body>
+</html>

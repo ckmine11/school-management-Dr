@@ -1,0 +1,83 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Results | Student</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-gray-50">
+<div class="flex h-screen overflow-hidden">
+  <div id="sidebar"></div>
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <div id="topbar"></div>
+    <main class="flex-1 overflow-y-auto p-6">
+      <div id="resultsContainer" class="space-y-4">
+        <div class="text-center py-10 text-gray-400"><i class="fas fa-spinner fa-spin text-2xl"></i></div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../js/api.js?v=10"></script>
+<script src="../js/auth.js?v=10"></script>
+<script src="../js/layout.js?v=10"></script>
+<script>
+  const user = Auth.requireAuth(['student']);
+  buildLayout('My Results', 'student');
+
+  async function loadResults() {
+    const studentId = user?.roleId;
+    if (!studentId) { showToast('Student profile not linked', 'error'); return; }
+    try {
+      const res = await api.get('/results', { studentId });
+      const el = document.getElementById('resultsContainer');
+      if (!res.data.length) { el.innerHTML = '<div class="text-center py-10 text-gray-400">No results yet</div>'; return; }
+      const gradeColor = { 'A+':'text-green-600','A':'text-green-600','B+':'text-blue-600','B':'text-blue-600','C':'text-yellow-600','D':'text-orange-600','F':'text-red-600' };
+      el.innerHTML = res.data.map(r => `
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="flex items-center justify-between px-5 py-4 border-b bg-gray-50">
+            <div>
+              <h3 class="font-bold text-gray-800 capitalize">${r.examType.replace('-',' ')} Examination</h3>
+              <p class="text-sm text-gray-500">${r.class} - ${r.section} | ${r.academicYear}</p>
+            </div>
+            <div class="text-right">
+              <div class="text-3xl font-bold ${gradeColor[r.grade]||''}">${r.grade}</div>
+              <div class="text-sm text-gray-500">${r.percentage}%</div>
+            </div>
+          </div>
+          <div class="p-5">
+            <table class="w-full text-sm mb-4">
+              <thead class="bg-gray-50"><tr>
+                <th class="text-left px-3 py-2 text-gray-500">Subject</th>
+                <th class="text-center px-3 py-2 text-gray-500">Max</th>
+                <th class="text-center px-3 py-2 text-gray-500">Obtained</th>
+                <th class="text-center px-3 py-2 text-gray-500">Grade</th>
+              </tr></thead>
+              <tbody class="divide-y divide-gray-100">
+                ${r.subjects.map(s => `<tr>
+                  <td class="px-3 py-2 font-medium">${s.name}</td>
+                  <td class="px-3 py-2 text-center">${s.maxMarks}</td>
+                  <td class="px-3 py-2 text-center font-semibold">${s.obtainedMarks}</td>
+                  <td class="px-3 py-2 text-center font-bold ${gradeColor[s.grade]||''}">${s.grade}</td>
+                </tr>`).join('')}
+              </tbody>
+            </table>
+            <div class="flex gap-4 text-sm bg-gray-50 p-3 rounded-xl">
+              <span>Total: <strong>${r.totalObtainedMarks}/${r.totalMaxMarks}</strong></span>
+              <span>Percentage: <strong>${r.percentage}%</strong></span>
+              ${r.rank ? `<span>Rank: <strong>#${r.rank}</strong></span>` : ''}
+              <span class="ml-auto font-bold ${r.status==='pass'?'text-green-600':'text-red-600'}">${r.status?.toUpperCase()}</span>
+            </div>
+            ${r.remarks ? `<p class="mt-2 text-sm text-gray-500">Remarks: ${r.remarks}</p>` : ''}
+          </div>
+        </div>`).join('');
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+  loadResults();
+  window.__pageInlineScriptExecuted = true;
+</script>
+<script src="../js/inline-fallback.js?v=1"></script>
+</body>
+</html>
+

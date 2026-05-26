@@ -1,0 +1,242 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Results | Teacher</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-gray-50">
+<div class="flex h-screen overflow-hidden">
+  <div id="sidebar"></div>
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <div id="topbar"></div>
+    <main class="flex-1 overflow-y-auto p-6">
+      <!-- Reuse the same admin results page functionality -->
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <div class="flex gap-2 flex-wrap">
+          <select id="rClass" class="select w-36">
+            <option value="">All Classes</option>
+            <option value="Class 1">Class 1</option>
+            <option value="Class 2">Class 2</option>
+            <option value="Class 3">Class 3</option>
+            <option value="Class 4">Class 4</option>
+            <option value="Class 5">Class 5</option>
+            <option value="Class 6">Class 6</option>
+            <option value="Class 7">Class 7</option>
+            <option value="Class 8">Class 8</option>
+            <option value="Class 9">Class 9</option>
+            <option value="Class 10">Class 10</option>
+            <option value="Class 11">Class 11</option>
+            <option value="Class 12">Class 12</option>
+          </select>
+          <select id="rSection" class="select w-28">
+            <option value="">Section</option><option>A</option><option>B</option><option>C</option><option>D</option>
+          </select>
+          <select id="rExam" class="select w-36">
+            <option value="">Exam Type</option>
+            <option value="unit-test">Unit Test</option><option value="midterm">Midterm</option>
+            <option value="quarterly">Quarterly</option><option value="final">Final</option>
+          </select>
+          <button onclick="loadResults()" class="btn btn-secondary"><i class="fas fa-search"></i></button>
+        </div>
+        <button onclick="openModal()" class="btn btn-primary"><i class="fas fa-plus"></i> Add Result</button>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-200"><tr>
+              <th class="text-left px-4 py-3 text-gray-500">Student</th>
+              <th class="text-left px-4 py-3 text-gray-500">Class</th>
+              <th class="text-left px-4 py-3 text-gray-500">Exam</th>
+              <th class="text-left px-4 py-3 text-gray-500">Marks</th>
+              <th class="text-left px-4 py-3 text-gray-500">%</th>
+              <th class="text-left px-4 py-3 text-gray-500">Grade</th>
+              <th class="text-left px-4 py-3 text-gray-500">Status</th>
+            </tr></thead>
+            <tbody id="resultTable" class="divide-y divide-gray-100">
+              <tr><td colspan="7" class="text-center py-8 text-gray-400">Select filters above</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Add Result Modal -->
+<div id="resultModal" class="hidden fixed inset-0 bg-black/50 modal-backdrop z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between px-6 py-4 border-b">
+      <h2 class="font-bold text-lg">Add Result</h2>
+      <button onclick="hideModal('resultModal')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="p-6">
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div class="col-span-2"><label class="label">Student ID (MongoDB _id)</label><input type="text" id="res-studentId" class="input"></div>
+        <div><label class="label">Exam Type</label>
+          <select id="res-exam" class="select">
+            <option value="unit-test">Unit Test</option><option value="midterm">Midterm</option>
+            <option value="quarterly">Quarterly</option><option value="final">Final</option>
+          </select>
+        </div>
+        <div><label class="label">Class</label>
+          <select id="res-class" class="select">
+            <option value="Class 1">Class 1</option>
+            <option value="Class 2">Class 2</option>
+            <option value="Class 3">Class 3</option>
+            <option value="Class 4">Class 4</option>
+            <option value="Class 5">Class 5</option>
+            <option value="Class 6">Class 6</option>
+            <option value="Class 7">Class 7</option>
+            <option value="Class 8">Class 8</option>
+            <option value="Class 9">Class 9</option>
+            <option value="Class 10">Class 10</option>
+            <option value="Class 11">Class 11</option>
+            <option value="Class 12">Class 12</option>
+          </select>
+        </div>
+        <div><label class="label">Section</label>
+          <select id="res-section" class="select"><option>A</option><option>B</option><option>C</option><option>D</option></select>
+        </div>
+        <div><label class="label">Academic Year</label><input type="text" id="res-year" class="input"></div>
+      </div>
+      <div class="border-t pt-4">
+        <div class="flex justify-between mb-3">
+          <span class="font-semibold text-gray-700 text-sm">Subjects</span>
+          <button onclick="addRow()" class="btn btn-secondary !py-1 !px-3 text-xs"><i class="fas fa-plus"></i> Add</button>
+        </div>
+        <div id="subjectRows" class="space-y-2">
+          <div class="grid grid-cols-11 gap-2">
+            <div class="col-span-5"><input type="text" class="input sub-name text-xs" placeholder="Subject"></div>
+            <div class="col-span-3"><input type="number" class="input sub-max text-xs" value="100" placeholder="Max"></div>
+            <div class="col-span-3"><input type="number" class="input sub-obtained text-xs" placeholder="Marks"></div>
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-end gap-3 mt-5">
+        <button onclick="hideModal('resultModal')" class="btn btn-secondary">Cancel</button>
+        <button onclick="save()" class="btn btn-primary">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../js/api.js?v=10"></script>
+<script src="../js/auth.js?v=10"></script>
+<script src="../js/layout.js?v=10"></script>
+<script>
+  const user = Auth.requireAuth(['teacher', 'admin']);
+  const layoutRole = user?.role === 'admin' ? 'admin' : 'teacher';
+  buildLayout('Results', layoutRole);
+  document.getElementById('res-year').value = `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`;
+
+  function fillSelectOptions(select, placeholder, values) {
+    select.innerHTML = placeholder + values.map((value) => `<option value="${value}">${value}</option>`).join('');
+  }
+
+  function setupTeacherFilters() {
+    if (user?.role !== 'teacher' || !Array.isArray(user.assignedClasses) || !user.assignedClasses.length) return;
+
+    const filterClass = document.getElementById('rClass');
+    const filterSection = document.getElementById('rSection');
+    const modalClass = document.getElementById('res-class');
+    const modalSection = document.getElementById('res-section');
+    const uniqueClasses = [...new Set(user.assignedClasses.map((entry) => entry.class))];
+
+    fillSelectOptions(filterClass, '<option value="">All Classes</option>', uniqueClasses);
+    fillSelectOptions(modalClass, '', uniqueClasses);
+
+    const refreshSections = () => {
+      const selectedFilterClass = filterClass.value;
+      const selectedModalClass = modalClass.value;
+      const filterSections = [...new Set(user.assignedClasses
+        .filter((entry) => !selectedFilterClass || entry.class === selectedFilterClass)
+        .map((entry) => entry.section))];
+      const modalSections = [...new Set(user.assignedClasses
+        .filter((entry) => !selectedModalClass || entry.class === selectedModalClass)
+        .map((entry) => entry.section))];
+
+      fillSelectOptions(filterSection, '<option value="">Section</option>', filterSections);
+      fillSelectOptions(modalSection, '', modalSections);
+
+      if (uniqueClasses.length === 1) {
+        filterClass.value = uniqueClasses[0];
+        modalClass.value = uniqueClasses[0];
+      }
+      if (filterSections.length === 1) filterSection.value = filterSections[0];
+      if (modalSections.length === 1) modalSection.value = modalSections[0];
+    };
+
+    filterClass.addEventListener('change', refreshSections);
+    modalClass.addEventListener('change', refreshSections);
+    refreshSections();
+  }
+
+  function addRow() {
+    const row = document.createElement('div');
+    row.className = 'grid grid-cols-11 gap-2';
+    row.innerHTML = `<div class="col-span-5"><input type="text" class="input sub-name text-xs" placeholder="Subject"></div>
+      <div class="col-span-3"><input type="number" class="input sub-max text-xs" value="100"></div>
+      <div class="col-span-3"><input type="number" class="input sub-obtained text-xs"></div>`;
+    document.getElementById('subjectRows').appendChild(row);
+  }
+
+  function openModal() { showModal('resultModal'); }
+
+  async function loadResults() {
+    const params = {};
+    const cls = document.getElementById('rClass').value;
+    const section = document.getElementById('rSection').value;
+    const exam = document.getElementById('rExam').value;
+    if (cls) params.class = cls;
+    if (section) params.section = section;
+    if (exam) params.examType = exam;
+    try {
+      const res = await api.get('/results', params);
+      const tb = document.getElementById('resultTable');
+      const gradeColor = { 'A+':'badge-green','A':'badge-green','B+':'badge-blue','B':'badge-blue','C':'badge-yellow','D':'badge-yellow','F':'badge-red' };
+      if (!res.data.length) { tb.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">No results</td></tr>'; return; }
+      tb.innerHTML = res.data.map(r => `<tr class="hover:bg-gray-50">
+        <td class="px-4 py-3"><div class="font-semibold text-sm">${r.studentId?.name||'?'}</div><div class="text-xs text-gray-400">${r.studentId?.studentId||''}</div></td>
+        <td class="px-4 py-3 text-sm">${r.class}-${r.section}</td>
+        <td class="px-4 py-3 text-sm capitalize">${r.examType}</td>
+        <td class="px-4 py-3 text-sm">${r.totalObtainedMarks}/${r.totalMaxMarks}</td>
+        <td class="px-4 py-3 text-sm font-semibold">${r.percentage}%</td>
+        <td class="px-4 py-3"><span class="badge ${gradeColor[r.grade]||'badge-gray'}">${r.grade}</span></td>
+        <td class="px-4 py-3"><span class="badge ${r.status==='pass'?'badge-green':'badge-red'}">${r.status}</span></td>
+      </tr>`).join('');
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  async function save() {
+    const subjects = [...document.querySelectorAll('#subjectRows .grid')].map(row => ({
+      name: row.querySelector('.sub-name').value,
+      maxMarks: Number(row.querySelector('.sub-max').value),
+      obtainedMarks: Number(row.querySelector('.sub-obtained').value)
+    })).filter(s => s.name);
+    if (!subjects.length) return showToast('Add subjects', 'error');
+    try {
+      await api.post('/results', {
+        studentId: document.getElementById('res-studentId').value,
+        examType: document.getElementById('res-exam').value,
+        class: document.getElementById('res-class').value,
+        section: document.getElementById('res-section').value,
+        academicYear: document.getElementById('res-year').value,
+        subjects
+      });
+      showToast('Result saved!', 'success');
+      hideModal('resultModal');
+      loadResults();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  setupTeacherFilters();
+  window.__pageInlineScriptExecuted = true;
+</script>
+<script src="../js/inline-fallback.js?v=1"></script>
+</body>
+</html>
+

@@ -1,0 +1,401 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Students | School Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-gray-50">
+<div class="flex h-screen overflow-hidden">
+  <div id="sidebar"></div>
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <div id="topbar"></div>
+    <main class="flex-1 overflow-y-auto p-6">
+
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <div class="flex gap-2 flex-wrap">
+          <input type="text" id="searchInput" class="input w-48" placeholder="Search students...">
+          <select id="classFilter" class="select w-32" onchange="loadStudents()">
+            <option value="">All Classes</option>
+          </select>
+          <select id="sectionFilter" class="select w-28" onchange="loadStudents()">
+            <option value="">All Sections</option>
+            <option>A</option><option>B</option><option>C</option><option>D</option>
+          </select>
+          <select id="statusFilter" class="select w-28" onchange="loadStudents()">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+          <button class="btn btn-secondary" onclick="loadStudents()"><i class="fas fa-search"></i></button>
+        </div>
+        <button class="btn btn-primary" onclick="openModal()"><i class="fas fa-plus"></i> Add Student</button>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th class="text-left px-4 py-3 text-gray-500">ID</th>
+                <th class="text-left px-4 py-3 text-gray-500">Name</th>
+                <th class="text-left px-4 py-3 text-gray-500">Class</th>
+                <th class="text-left px-4 py-3 text-gray-500">Parent</th>
+                <th class="text-left px-4 py-3 text-gray-500">Phone</th>
+                <th class="text-left px-4 py-3 text-gray-500">Status</th>
+                <th class="text-left px-4 py-3 text-gray-500">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="studentTable" class="divide-y divide-gray-100">
+              <tr><td colspan="7" class="text-center py-10 text-gray-400"><i class="fas fa-spinner fa-spin text-2xl"></i></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="px-4 py-3 border-t border-gray-100 flex items-center justify-between">
+          <span class="text-sm text-gray-500" id="tableCount"></span>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div id="studentModal" class="hidden fixed inset-0 bg-black/50 modal-backdrop z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between px-6 py-4 border-b">
+      <h2 class="font-bold text-lg text-gray-800" id="modalTitle">Add Student</h2>
+      <button onclick="hideModal('studentModal')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"><i class="fas fa-times"></i></button>
+    </div>
+    <form id="studentForm" onsubmit="saveStudent(event)" class="p-6">
+      <input type="hidden" id="studentId">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div><label class="label">Full Name *</label><input type="text" id="s-name" class="input" required></div>
+        <div><label class="label">Date of Birth</label><input type="date" id="s-dob" class="input"></div>
+        <div>
+          <label class="label">Gender</label>
+          <select id="s-gender" class="select">
+            <option value="">Select</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option>
+          </select>
+        </div>
+        <div><label class="label">Roll Number</label><input type="text" id="s-rollNo" class="input"></div>
+        <div>
+          <label class="label">Class *</label>
+          <select id="s-class" class="select" required>
+            <option value="">Select Class</option>
+            <option value="Class 1">Class 1</option>
+            <option value="Class 2">Class 2</option>
+            <option value="Class 3">Class 3</option>
+            <option value="Class 4">Class 4</option>
+            <option value="Class 5">Class 5</option>
+            <option value="Class 6">Class 6</option>
+            <option value="Class 7">Class 7</option>
+            <option value="Class 8">Class 8</option>
+            <option value="Class 9">Class 9</option>
+            <option value="Class 10">Class 10</option>
+            <option value="Class 11">Class 11</option>
+            <option value="Class 12">Class 12</option>
+          </select>
+        </div>
+        <div>
+          <label class="label">Section *</label>
+          <select id="s-section" class="select" required>
+            <option value="">Select</option>
+            <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+          </select>
+        </div>
+        <div class="sm:col-span-2"><label class="label">Address</label><input type="text" id="s-address" class="input"></div>
+        <div><label class="label">Phone</label><input type="tel" id="s-phone" class="input"></div>
+        <div><label class="label">Student Login Email</label><input type="email" id="s-email" class="input"></div>
+        <div class="sm:col-span-2 border-t pt-4 mt-2"><p class="font-semibold text-gray-700 text-sm mb-3">Parent / Guardian Info</p></div>
+        <div><label class="label">Parent Name</label><input type="text" id="s-parentName" class="input"></div>
+        <div><label class="label">Parent Phone (WhatsApp)</label><input type="tel" id="s-parentPhone" class="input"></div>
+        <div><label class="label">Parent Login Email</label><input type="email" id="s-parentEmail" class="input"></div>
+        <div>
+          <label class="label">Status</label>
+          <select id="s-status" class="select">
+            <option value="active">Active</option><option value="inactive">Inactive</option><option value="transferred">Transferred</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex justify-end gap-3 mt-6">
+        <button type="button" onclick="hideModal('studentModal')" class="btn btn-secondary">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Student</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="profileModal" class="hidden fixed inset-0 bg-black/50 modal-backdrop z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+    <div class="flex items-center justify-between px-6 py-4 border-b">
+      <h2 class="font-bold text-lg text-gray-800">Student Profile</h2>
+      <button onclick="hideModal('profileModal')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"><i class="fas fa-times"></i></button>
+    </div>
+    <div id="profileContent" class="p-6"></div>
+  </div>
+</div>
+
+<div id="credentialModal" class="hidden fixed inset-0 bg-black/50 modal-backdrop z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl">
+    <div class="flex items-center justify-between px-6 py-4 border-b">
+      <h2 class="font-bold text-lg text-gray-800" id="credentialTitle">Temporary Credentials</h2>
+      <button onclick="hideModal('credentialModal')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="p-6">
+      <p class="text-sm text-gray-500 mb-4">Share these temporary credentials securely. The user will be required to set a new password after signing in.</p>
+      <div id="credentialContent" class="space-y-3"></div>
+      <div class="flex justify-end mt-6">
+        <button type="button" onclick="hideModal('credentialModal')" class="btn btn-primary">Done</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../js/api.js?v=10"></script>
+<script src="../js/auth.js?v=10"></script>
+<script src="../js/layout.js?v=10"></script>
+<script>
+  Auth.requireAuth(['admin']);
+  buildLayout('Students', 'admin');
+
+  const pageAction = new URLSearchParams(window.location.search).get('action');
+  let students = [];
+
+  function clearPageAction() {
+    if (!window.location.search) return;
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+
+  async function loadStudents() {
+    const search = document.getElementById('searchInput').value;
+    const cls = document.getElementById('classFilter').value;
+    const section = document.getElementById('sectionFilter').value;
+    const status = document.getElementById('statusFilter').value;
+    const params = {};
+    if (search) params.search = search;
+    if (cls) params.class = cls;
+    if (section) params.section = section;
+    if (status) params.status = status;
+
+    try {
+      const res = await api.get('/students', params);
+      students = res.data;
+      renderTable(students);
+      document.getElementById('tableCount').textContent = `Showing ${students.length} of ${res.total} students`;
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }
+
+  async function loadClasses() {
+    try {
+      const res = await api.get('/students/classes/list');
+      const sel = document.getElementById('classFilter');
+      res.data.forEach((c) => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        sel.appendChild(opt);
+      });
+    } catch {}
+  }
+
+  function renderTable(data) {
+    const tb = document.getElementById('studentTable');
+    if (!data.length) {
+      tb.innerHTML = '<tr><td colspan="7" class="text-center py-10 text-gray-400">No students found</td></tr>';
+      return;
+    }
+
+    tb.innerHTML = data.map((s) => `
+      <tr class="hover:bg-gray-50 transition">
+        <td class="px-4 py-3 text-sm font-mono text-blue-600">${s.studentId}</td>
+        <td class="px-4 py-3">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-600 text-xs">${s.name[0].toUpperCase()}</div>
+            <div>
+              <div class="text-sm font-semibold text-gray-800">${s.name}</div>
+              <div class="text-xs text-gray-400">Roll: ${s.rollNo || '-'}</div>
+            </div>
+          </div>
+        </td>
+        <td class="px-4 py-3 text-sm text-gray-600">${s.class} - ${s.section}</td>
+        <td class="px-4 py-3 text-sm text-gray-600">${s.parentName || '-'}</td>
+        <td class="px-4 py-3 text-sm text-gray-600">${s.parentPhone || s.phone || '-'}</td>
+        <td class="px-4 py-3"><span class="badge ${s.status === 'active' ? 'badge-green' : s.status === 'inactive' ? 'badge-red' : 'badge-yellow'}">${s.status}</span></td>
+        <td class="px-4 py-3">
+          <div class="flex gap-1">
+            <button onclick="viewProfile('${s._id}')" class="btn btn-secondary !py-1 !px-2 text-xs" title="View Profile"><i class="fas fa-eye"></i></button>
+            <button onclick="editStudent('${s._id}')" class="btn btn-secondary !py-1 !px-2 text-xs" title="Edit"><i class="fas fa-edit"></i></button>
+            <button onclick="window.open('/api/students/${s._id}/idcard','_blank')" class="btn btn-primary !py-1 !px-2 text-xs" title="Download ID Card"><i class="fas fa-id-card"></i></button>
+            <button onclick="deleteStudent('${s._id}','${s.name}')" class="btn btn-danger !py-1 !px-2 text-xs"><i class="fas fa-trash"></i></button>
+          </div>
+        </td>
+      </tr>`).join('');
+  }
+
+  function openModal(data = null) {
+    document.getElementById('studentId').value = data?._id || '';
+    document.getElementById('modalTitle').textContent = data ? 'Edit Student' : 'Add Student';
+    document.getElementById('s-name').value = data?.name || '';
+    document.getElementById('s-dob').value = data?.dob ? data.dob.split('T')[0] : '';
+    document.getElementById('s-gender').value = data?.gender || '';
+    document.getElementById('s-rollNo').value = data?.rollNo || '';
+    document.getElementById('s-class').value = data?.class || '';
+    document.getElementById('s-section').value = data?.section || '';
+    document.getElementById('s-address').value = data?.address || '';
+    document.getElementById('s-phone').value = data?.phone || '';
+    document.getElementById('s-email').value = data?.email || '';
+    document.getElementById('s-parentName').value = data?.parentName || '';
+    document.getElementById('s-parentPhone').value = data?.parentPhone || '';
+    document.getElementById('s-parentEmail').value = data?.parentEmail || '';
+    document.getElementById('s-status').value = data?.status || 'active';
+    showModal('studentModal');
+    window.setTimeout(() => document.getElementById('s-name')?.focus(), 50);
+  }
+
+  function editStudent(id) {
+    const s = students.find((item) => item._id === id);
+    if (s) openModal(s);
+  }
+
+  function openCredentialModal(title, credentials) {
+    const entries = [
+      { label: 'Student Login', account: credentials?.student },
+      { label: 'Parent Login', account: credentials?.parent }
+    ].filter((entry) => entry.account?.email && entry.account?.temporaryPassword);
+
+    if (!entries.length) return false;
+
+    document.getElementById('credentialTitle').textContent = title;
+    document.getElementById('credentialContent').innerHTML = entries.map(({ label, account }) => `
+      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <p class="text-sm font-semibold text-slate-800">${label}</p>
+        <p class="text-xs text-slate-500 mt-1">Email</p>
+        <p class="font-mono text-sm text-blue-700 break-all">${account.email}</p>
+        <p class="text-xs text-slate-500 mt-3">Temporary Password</p>
+        <p class="font-mono text-base font-bold text-slate-900">${account.temporaryPassword}</p>
+      </div>
+    `).join('');
+
+    showModal('credentialModal');
+    return true;
+  }
+
+  async function viewProfile(id) {
+    try {
+      const res = await api.get(`/students/${id}`);
+      const s = res.data;
+      document.getElementById('profileContent').innerHTML = `
+        <div class="flex items-center gap-4 mb-5">
+          <div class="w-16 h-16 rounded-2xl bg-blue-100 flex items-center justify-center text-2xl font-bold text-blue-600">${s.name[0].toUpperCase()}</div>
+          <div>
+            <h3 class="text-xl font-bold text-gray-800">${s.name}</h3>
+            <p class="text-blue-600 font-mono text-sm">${s.studentId}</p>
+            <span class="badge ${s.status === 'active' ? 'badge-green' : 'badge-red'} mt-1">${s.status}</span>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3 text-sm">
+          <div class="bg-gray-50 p-3 rounded-xl"><span class="text-gray-400 block text-xs">Class / Section</span><span class="font-semibold">${s.class} - ${s.section}</span></div>
+          <div class="bg-gray-50 p-3 rounded-xl"><span class="text-gray-400 block text-xs">Roll No</span><span class="font-semibold">${s.rollNo || '-'}</span></div>
+          <div class="bg-gray-50 p-3 rounded-xl"><span class="text-gray-400 block text-xs">Date of Birth</span><span class="font-semibold">${formatDate(s.dob)}</span></div>
+          <div class="bg-gray-50 p-3 rounded-xl"><span class="text-gray-400 block text-xs">Gender</span><span class="font-semibold capitalize">${s.gender || '-'}</span></div>
+          <div class="bg-gray-50 p-3 rounded-xl"><span class="text-gray-400 block text-xs">Phone</span><span class="font-semibold">${s.phone || '-'}</span></div>
+          <div class="bg-gray-50 p-3 rounded-xl"><span class="text-gray-400 block text-xs">Admission Date</span><span class="font-semibold">${formatDate(s.admissionDate)}</span></div>
+          <div class="bg-gray-50 p-3 rounded-xl col-span-2"><span class="text-gray-400 block text-xs">Address</span><span class="font-semibold">${s.address || '-'}</span></div>
+          <div class="bg-blue-50 p-3 rounded-xl col-span-2 border border-blue-100">
+            <span class="text-blue-500 block text-xs font-bold mb-1">Parent Information</span>
+            <p class="font-semibold">${s.parentName || '-'}</p>
+            <p class="text-gray-600">${s.parentPhone || '-'} | ${s.parentEmail || '-'}</p>
+          </div>
+          <div class="bg-amber-50 p-3 rounded-xl col-span-2 border border-amber-100">
+            <span class="text-amber-600 block text-xs font-bold mb-1">Login Accounts</span>
+            <p class="text-sm text-gray-700">Student: ${s.loginAccounts?.student?.email || s.email || '-'}</p>
+            <p class="text-xs text-gray-500">Status: ${s.loginAccounts?.student?.isActive ? 'Active' : 'Inactive'} | Password update: ${s.loginAccounts?.student?.mustChangePassword ? 'Pending' : 'Completed'} | Last login: ${formatDateTime(s.loginAccounts?.student?.lastLogin)}</p>
+            <p class="text-sm text-gray-700 mt-2">Parent: ${s.loginAccounts?.parent?.email || s.parentEmail || '-'}</p>
+            <p class="text-xs text-gray-500">Status: ${s.loginAccounts?.parent?.isActive ? 'Active' : 'Inactive'} | Password update: ${s.loginAccounts?.parent?.mustChangePassword ? 'Pending' : 'Completed'} | Last login: ${formatDateTime(s.loginAccounts?.parent?.lastLogin)}</p>
+            <div class="flex flex-wrap gap-2 mt-3">
+              <button onclick="resetStudentLoginPassword('${s._id}', 'student')" class="btn btn-secondary !py-1.5 !px-3 text-xs"><i class="fas fa-key"></i> Reset Student Login</button>
+              <button onclick="resetStudentLoginPassword('${s._id}', 'parent')" class="btn btn-secondary !py-1.5 !px-3 text-xs"><i class="fas fa-key"></i> Reset Parent Login</button>
+            </div>
+          </div>
+        </div>`;
+      showModal('profileModal');
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }
+
+  async function saveStudent(e) {
+    e.preventDefault();
+    const id = document.getElementById('studentId').value;
+    const data = {
+      name: document.getElementById('s-name').value,
+      dob: document.getElementById('s-dob').value,
+      gender: document.getElementById('s-gender').value,
+      rollNo: document.getElementById('s-rollNo').value,
+      class: document.getElementById('s-class').value,
+      section: document.getElementById('s-section').value,
+      address: document.getElementById('s-address').value,
+      phone: document.getElementById('s-phone').value,
+      email: document.getElementById('s-email').value,
+      parentName: document.getElementById('s-parentName').value,
+      parentPhone: document.getElementById('s-parentPhone').value,
+      parentEmail: document.getElementById('s-parentEmail').value,
+      status: document.getElementById('s-status').value
+    };
+
+    try {
+      const res = id ? await api.put(`/students/${id}`, data) : await api.post('/students', data);
+      hideModal('studentModal');
+      showToast(id ? 'Student updated successfully' : 'Student added successfully', 'success');
+      openCredentialModal(id ? 'New temporary credentials issued' : 'Temporary credentials issued', res.credentials);
+      loadStudents();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }
+
+  async function resetStudentLoginPassword(id, accountType) {
+    const label = accountType === 'parent' ? 'parent' : 'student';
+    if (!confirm(`Reset the ${label} login password? A new temporary password will be generated.`)) return;
+
+    try {
+      const route = accountType === 'parent' ? `/students/${id}/reset-parent-password` : `/students/${id}/reset-student-password`;
+      const res = await api.post(route, {});
+      hideModal('profileModal');
+      showToast(`${label[0].toUpperCase() + label.slice(1)} login reset successfully`, 'success');
+      openCredentialModal(`Temporary ${label} credentials`, res.credentials);
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }
+
+  async function deleteStudent(id, name) {
+    if (!confirm(`Delete student "${name}"? This cannot be undone.`)) return;
+    try {
+      await api.delete(`/students/${id}`);
+      showToast('Student deleted', 'success');
+      loadStudents();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }
+
+  document.getElementById('searchInput').addEventListener('keyup', (e) => {
+    if (e.key === 'Enter') loadStudents();
+  });
+
+  loadClasses();
+  loadStudents();
+  if (pageAction === 'add') {
+    openModal();
+    clearPageAction();
+  }
+  window.__pageInlineScriptExecuted = true;
+</script>
+<script src="../js/inline-fallback.js?v=1"></script>
+</body>
+</html>
+

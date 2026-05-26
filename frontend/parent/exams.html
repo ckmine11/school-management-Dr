@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Child's Exam Schedule | School Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-gray-50">
+<div class="flex h-screen overflow-hidden">
+  <div id="sidebar"></div>
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <div id="topbar"></div>
+    <main class="flex-1 overflow-y-auto p-6">
+
+      <div id="examContent">
+        <div class="text-center py-10 text-gray-400"><i class="fas fa-spinner fa-spin text-2xl"></i></div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script src="../js/api.js?v=10"></script>
+<script src="../js/auth.js?v=10"></script>
+<script src="../js/layout.js?v=10"></script>
+<script>
+  const user = Auth.requireAuth(['parent']);
+  buildLayout("Child's Exam Schedule", 'parent');
+
+  const TYPE_LABELS = { 'unit-test': 'Unit Test', midterm: 'Midterm', quarterly: 'Quarterly', final: 'Final', other: 'Other' };
+
+  async function init() {
+    try {
+      // Get child info for header
+      const studentId = user?.roleId;
+      let childName = '', childClass = '';
+      if (studentId) {
+        try {
+          const sRes = await api.get(`/students/${studentId}`);
+          childName = sRes.data.name;
+          childClass = `${sRes.data.class} - ${sRes.data.section}`;
+        } catch {}
+      }
+
+      const res = await api.get('/exams');
+      renderExams(res.data, childName, childClass);
+    } catch (err) {
+      document.getElementById('examContent').innerHTML =
+        `<div class="bg-red-50 border border-red-200 rounded-2xl p-6 text-center text-red-600">${err.message}</div>`;
+    }
+  }
+
+  function renderExams(data, childName, childClass) {
+    const content = document.getElementById('examContent');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const upcoming = data.filter(e => new Date(e.examDate) >= today);
+    const past = data.filter(e => new Date(e.examDate) < today);
+
+    const header = childName ? `
+      <div class="bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl px-5 py-4 mb-5 text-white flex items-center justify-between">
+        <div>
+          <p class="text-orange-100 text-xs mb-1">Child</p>
+          <p class="font-bold text-lg">${childName}</p>
+          <p class="text-orange-100 text-sm">${childClass}</p>
+        </div>
+        <div class="text-right">
+          <p class="text-orange-100 text-xs mb-1">Total Exams</p>
+          <p class="font-bold text-2xl">${data.length}</p>
+        </div>
+      </div>` : '';
+
+    if (!data.length) {
+      content.innerHTML = header + '<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center text-gray-400"><i class="fas fa-calendar-times text-4xl mb-3 block"></i>No exams scheduled yet.</div>';
+      return;
+    }
+
+    const examCard = (e) => {
+      const examDate = new Date(e.examDate);
+      const isPast = examDate < today;
+      const diffDays = Math.ceil((examDate - today) / (1000 * 60 * 60 * 24));
+      const badge = diffDays === 0 ? '<span class="badge badge-green ml-2">Today!</span>'
+        : diffDays === 1 ? '<span class="badge badge-yellow ml-2">Tomorrow</span>'
+        : diffDays > 0 && diffDays <= 3 ? `<span class="badge badge-yellow ml-2">In ${diffDays} days</span>` : '';
+
+      return `
+        <div class="bg-white rounded-2xl shadow-sm border ${!isPast && diffDays <= 1 ? 'border-orange-300' : 'border-gray-100'} p-5 flex items-center gap-4">
+          <div class="w-14 h-14 rounded-xl ${isPast ? 'bg-gray-100' : 'bg-orange-50'} flex flex-col items-center justify-center flex-shrink-0">
+            <span class="text-lg font-bold ${isPast ? 'text-gray-400' : 'text-orange-700'}">${examDate.getDate()}</span>
+            <span class="text-xs ${isPast ? 'text-gray-400' : 'text-orange-500'}">${examDate.toLocaleDateString('en-IN', { month: 'short' })}</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center flex-wrap gap-1">
+              <span class="font-bold text-gray-800">${e.subject}</span>
+              ${badge}
+              ${isPast ? '<span class="text-xs text-gray-400 ml-1">Completed</span>' : ''}
+            </div>
+            <div class="text-sm text-gray-500 mt-1">
+              ${TYPE_LABELS[e.examType] || e.examType} &bull; ${e.startTime} &bull; ${e.duration} min &bull; Max: ${e.maxMarks} marks
+              ${e.room ? ` &bull; Room: ${e.room}` : ''}
+            </div>
+            ${e.notes ? `<div class="text-xs text-gray-400 mt-1 italic">${e.notes}</div>` : ''}
+          </div>
+        </div>`;
+    };
+
+    content.innerHTML = header;
+    if (upcoming.length) {
+      content.innerHTML += `<h3 class="font-semibold text-gray-700 mb-3">Upcoming Exams (${upcoming.length})</h3>
+        <div class="space-y-3 mb-6">${upcoming.map(examCard).join('')}</div>`;
+    }
+    if (past.length) {
+      content.innerHTML += `<h3 class="font-semibold text-gray-500 mb-3">Past Exams</h3>
+        <div class="space-y-3">${past.map(examCard).join('')}</div>`;
+    }
+  }
+
+  init();
+  window.__pageInlineScriptExecuted = true;
+</script>
+<script src="../js/inline-fallback.js?v=1"></script>
+</body>
+</html>

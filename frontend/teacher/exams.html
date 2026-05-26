@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exam Schedule | School Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-gray-50">
+<div class="flex h-screen overflow-hidden">
+  <div id="sidebar"></div>
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <div id="topbar"></div>
+    <main class="flex-1 overflow-y-auto p-6">
+
+      <div class="flex flex-wrap items-center gap-3 mb-5">
+        <select id="exClassFilter" class="select w-32" onchange="loadExams()">
+          <option value="">All Classes</option>
+          <option value="Class 1">Class 1</option><option value="Class 2">Class 2</option>
+          <option value="Class 3">Class 3</option><option value="Class 4">Class 4</option>
+          <option value="Class 5">Class 5</option><option value="Class 6">Class 6</option>
+          <option value="Class 7">Class 7</option><option value="Class 8">Class 8</option>
+          <option value="Class 9">Class 9</option><option value="Class 10">Class 10</option>
+          <option value="Class 11">Class 11</option><option value="Class 12">Class 12</option>
+        </select>
+        <select id="exTypeFilter" class="select w-36" onchange="loadExams()">
+          <option value="">All Types</option>
+          <option value="unit-test">Unit Test</option>
+          <option value="midterm">Midterm</option>
+          <option value="quarterly">Quarterly</option>
+          <option value="final">Final</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th class="text-left px-4 py-3 text-gray-500">Date</th>
+                <th class="text-left px-4 py-3 text-gray-500">Subject</th>
+                <th class="text-left px-4 py-3 text-gray-500">Class</th>
+                <th class="text-left px-4 py-3 text-gray-500">Type</th>
+                <th class="text-left px-4 py-3 text-gray-500">Time</th>
+                <th class="text-left px-4 py-3 text-gray-500">Duration</th>
+                <th class="text-left px-4 py-3 text-gray-500">Marks</th>
+                <th class="text-left px-4 py-3 text-gray-500">Room</th>
+              </tr>
+            </thead>
+            <tbody id="examTable" class="divide-y divide-gray-100">
+              <tr><td colspan="8" class="text-center py-10 text-gray-400"><i class="fas fa-spinner fa-spin text-2xl"></i></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="../js/api.js?v=10"></script>
+<script src="../js/auth.js?v=10"></script>
+<script src="../js/layout.js?v=10"></script>
+<script>
+  Auth.requireAuth(['teacher']);
+  buildLayout('Exam Schedule', 'teacher');
+
+  const TYPE_LABELS = { 'unit-test': 'Unit Test', midterm: 'Midterm', quarterly: 'Quarterly', final: 'Final', other: 'Other' };
+
+  async function loadExams() {
+    const cls = document.getElementById('exClassFilter').value;
+    const examType = document.getElementById('exTypeFilter').value;
+    const params = {};
+    if (cls) params.class = cls;
+    if (examType) params.examType = examType;
+    try {
+      const res = await api.get('/exams', params);
+      renderTable(res.data);
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  function renderTable(data) {
+    const tb = document.getElementById('examTable');
+    const today = new Date().toDateString();
+    if (!data.length) { tb.innerHTML = '<tr><td colspan="8" class="text-center py-10 text-gray-400">No exams scheduled</td></tr>'; return; }
+    tb.innerHTML = data.map(e => {
+      const examDay = new Date(e.examDate).toDateString();
+      const isToday = examDay === today;
+      const isPast = new Date(e.examDate) < new Date() && !isToday;
+      return `<tr class="hover:bg-gray-50 ${isToday ? 'bg-green-50' : ''}">
+        <td class="px-4 py-3 text-sm font-semibold ${isPast ? 'text-gray-400' : isToday ? 'text-green-700' : ''}">${formatDate(e.examDate)} ${isToday ? '<span class="badge badge-green text-xs ml-1">Today</span>' : ''}</td>
+        <td class="px-4 py-3 text-sm font-medium text-blue-700">${e.subject}</td>
+        <td class="px-4 py-3 text-sm">${e.class}${e.section !== 'All' ? ` - ${e.section}` : ''}</td>
+        <td class="px-4 py-3 text-sm">${TYPE_LABELS[e.examType] || e.examType}</td>
+        <td class="px-4 py-3 text-sm">${e.startTime}</td>
+        <td class="px-4 py-3 text-sm">${e.duration} min</td>
+        <td class="px-4 py-3 text-sm">${e.maxMarks}</td>
+        <td class="px-4 py-3 text-sm text-gray-500">${e.room || '-'}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  loadExams();
+  window.__pageInlineScriptExecuted = true;
+</script>
+<script src="../js/inline-fallback.js?v=1"></script>
+</body>
+</html>

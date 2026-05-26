@@ -1,0 +1,39 @@
+# Environment variables — NEVER commit these
+.env
+*.env
+backend/.env
+
+# Node modules
+node_modules/
+backend/node_modules/
+
+# Uploaded files (user data, not source code)
+backend/uploads/
+
+# WhatsApp session data
+backend/.wwebjs_auth/
+backend/.wwebjs_cache/
+
+# Logs
+*.log
+npm-debug.log*
+logs/
+
+# OS / editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Claude Code settings
+.claude/
+
+# Browser test artifacts
+chrome-headless-profile/
+edge-headless-profile/
+chrome-dom.txt
+edge-dom.txt
+cookies.txt
+
+# Local uploads
+uploads/

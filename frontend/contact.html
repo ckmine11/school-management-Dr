@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact | Bright Future School</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-gray-50">
+  <nav class="sticky top-0 bg-white shadow-sm z-50">
+    <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-3"><div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold">S</div><span class="font-bold text-gray-800">Bright Future School</span></a>
+      <div class="hidden md:flex gap-6 text-sm font-medium text-gray-600">
+        <a href="index.html" class="hover:text-blue-600">Home</a><a href="about.html" class="hover:text-blue-600">About</a>
+        <a href="admission.html" class="hover:text-blue-600">Admission</a><a href="gallery.html" class="hover:text-blue-600">Gallery</a>
+        <a href="contact.html" class="text-blue-600">Contact</a>
+      </div>
+      <a href="login.html" class="btn btn-primary text-sm">Login</a>
+    </div>
+  </nav>
+
+  <div class="bg-gradient-to-r from-teal-700 to-teal-500 text-white py-16 px-4 text-center">
+    <h1 class="text-4xl font-bold mb-3">Contact Us</h1>
+    <p class="text-teal-100">We'd love to hear from you</p>
+  </div>
+
+  <div class="max-w-5xl mx-auto px-4 py-12">
+    <div class="grid md:grid-cols-2 gap-8">
+      <!-- Contact Info -->
+      <div>
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">Get in Touch</h2>
+        <div class="space-y-4">
+          <div class="flex items-start gap-4 bg-white p-4 rounded-xl shadow-sm">
+            <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
+              <i class="fas fa-map-marker-alt text-blue-600"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-gray-800 text-sm">Address</h4>
+              <p class="text-gray-500 text-sm">123 Education Street, Knowledge Park,<br>City - 110001, State, India</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4 bg-white p-4 rounded-xl shadow-sm">
+            <div class="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0">
+              <i class="fas fa-phone text-green-600"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-gray-800 text-sm">Phone</h4>
+              <p class="text-gray-500 text-sm">+91 99999 00000 (Office)<br>+91 88888 11111 (Admission)</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4 bg-white p-4 rounded-xl shadow-sm">
+            <div class="w-10 h-10 rounded-full bg-yellow-50 flex items-center justify-center flex-shrink-0">
+              <i class="fas fa-envelope text-yellow-600"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-gray-800 text-sm">Email</h4>
+              <p class="text-gray-500 text-sm">info@brightfutureschool.com<br>admissions@brightfutureschool.com</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4 bg-white p-4 rounded-xl shadow-sm">
+            <div class="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0">
+              <i class="fas fa-clock text-purple-600"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-gray-800 text-sm">Office Hours</h4>
+              <p class="text-gray-500 text-sm">Monday – Friday: 8:00 AM – 4:00 PM<br>Saturday: 9:00 AM – 1:00 PM</p>
+            </div>
+          </div>
+          <!-- Social -->
+          <div class="flex gap-3 mt-4">
+            <a href="#" class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 transition"><i class="fab fa-facebook-f"></i></a>
+            <a href="#" class="w-10 h-10 rounded-full bg-sky-500 text-white flex items-center justify-center hover:bg-sky-600 transition"><i class="fab fa-twitter"></i></a>
+            <a href="#" class="w-10 h-10 rounded-full bg-pink-600 text-white flex items-center justify-center hover:bg-pink-700 transition"><i class="fab fa-instagram"></i></a>
+            <a href="#" class="w-10 h-10 rounded-full bg-red-600 text-white flex items-center justify-center hover:bg-red-700 transition"><i class="fab fa-youtube"></i></a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact Form -->
+      <div class="bg-white rounded-2xl shadow-sm border p-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-5">Send a Message</h2>
+        <form onsubmit="sendMsg(event)" class="space-y-4">
+          <div><label class="label">Your Name *</label><input type="text" class="input" required></div>
+          <div><label class="label">Email *</label><input type="email" class="input" required></div>
+          <div><label class="label">Phone</label><input type="tel" class="input"></div>
+          <div>
+            <label class="label">Subject</label>
+            <select class="select">
+              <option>General Inquiry</option>
+              <option>Admission Query</option>
+              <option>Fee Related</option>
+              <option>Complaint</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div><label class="label">Message *</label><textarea class="input h-28 resize-none" required placeholder="Type your message here..."></textarea></div>
+          <button type="submit" class="btn btn-primary w-full justify-center py-3"><i class="fas fa-paper-plane mr-2"></i>Send Message</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <footer class="bg-gray-900 text-gray-400 py-8 px-4 text-center text-sm mt-4">
+    © 2024 Bright Future School. <a href="index.html" class="text-blue-400 hover:text-blue-300">Back to Home</a>
+  </footer>
+
+  <script src="js/auth.js?v=10"></script>
+  <script>
+    function sendMsg(e) { e.preventDefault(); showToast('Message sent! We will respond within 24 hours.', 'success'); e.target.reset(); }
+  </script>
+</body>
+</html>

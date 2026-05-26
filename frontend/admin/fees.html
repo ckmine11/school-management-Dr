@@ -1,0 +1,342 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fee Management | School Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-gray-50">
+<div class="flex h-screen overflow-hidden">
+  <div id="sidebar"></div>
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <div id="topbar"></div>
+    <main class="flex-1 overflow-y-auto p-6">
+
+      <!-- Stats -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5" id="feeStats">
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center">
+          <div class="text-2xl font-bold text-gray-800" id="stat-total">--</div>
+          <div class="text-xs text-gray-500 mt-1">Total Fees</div>
+        </div>
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center">
+          <div class="text-2xl font-bold text-green-600" id="stat-collected">--</div>
+          <div class="text-xs text-gray-500 mt-1">Collected</div>
+        </div>
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center">
+          <div class="text-2xl font-bold text-red-500" id="stat-unpaid">--</div>
+          <div class="text-xs text-gray-500 mt-1">Unpaid Records</div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div class="flex gap-2 flex-wrap">
+          <select id="fStatusFilter" class="select w-28" onchange="loadFees()">
+            <option value="">All Status</option>
+            <option value="paid">Paid</option>
+            <option value="unpaid">Unpaid</option>
+            <option value="partial">Partial</option>
+          </select>
+          <select id="fTypeFilter" class="select w-32" onchange="loadFees()">
+            <option value="">All Types</option>
+            <option value="tuition">Tuition</option>
+            <option value="transport">Transport</option>
+            <option value="library">Library</option>
+            <option value="sports">Sports</option>
+            <option value="exam">Exam</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="sendReminders()" class="btn btn-warning"><i class="fab fa-whatsapp"></i> Send Reminders</button>
+          <button onclick="openAddFee()" class="btn btn-primary"><i class="fas fa-plus"></i> Add Fee</button>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th class="text-left px-4 py-3 text-gray-500">Receipt</th>
+                <th class="text-left px-4 py-3 text-gray-500">Student</th>
+                <th class="text-left px-4 py-3 text-gray-500">Type</th>
+                <th class="text-left px-4 py-3 text-gray-500">Amount</th>
+                <th class="text-left px-4 py-3 text-gray-500">Due Date</th>
+                <th class="text-left px-4 py-3 text-gray-500">Status</th>
+                <th class="text-left px-4 py-3 text-gray-500">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="feeTable" class="divide-y divide-gray-100">
+              <tr><td colspan="7" class="text-center py-10 text-gray-400"><i class="fas fa-spinner fa-spin text-2xl"></i></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Add Fee Modal -->
+<div id="feeModal" class="hidden fixed inset-0 bg-black/50 modal-backdrop z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+    <div class="flex items-center justify-between px-6 py-4 border-b">
+      <h2 class="font-bold text-lg text-gray-800">Add Fee Record</h2>
+      <button onclick="hideModal('feeModal')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"><i class="fas fa-times"></i></button>
+    </div>
+    <form id="feeForm" onsubmit="saveFee(event)" class="p-6">
+      <div class="grid grid-cols-2 gap-4">
+        <div class="col-span-2">
+          <label class="label">Student *</label>
+          <select id="f-studentId" class="select" required>
+            <option value="">Loading students...</option>
+          </select>
+        </div>
+        <div>
+          <label class="label">Fee Type *</label>
+          <select id="f-type" class="select" required>
+            <option value="">Select Type</option>
+            <option value="tuition">Tuition</option><option value="transport">Transport</option>
+            <option value="library">Library</option><option value="sports">Sports</option>
+            <option value="exam">Exam</option><option value="other">Other</option>
+          </select>
+        </div>
+        <div><label class="label">Amount *</label><input type="number" id="f-amount" class="input" min="1" required></div>
+        <div><label class="label">Due Date *</label><input type="date" id="f-dueDate" class="input" required></div>
+        <div><label class="label">Month</label><input type="text" id="f-month" class="input" placeholder="June"></div>
+        <div><label class="label">Year</label><input type="number" id="f-year" class="input"></div>
+        <div><label class="label">Remarks</label><input type="text" id="f-remarks" class="input" placeholder="Optional"></div>
+      </div>
+      <div class="flex justify-end gap-3 mt-5">
+        <button type="button" onclick="hideModal('feeModal')" class="btn btn-secondary">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Pay Modal -->
+<div id="payModal" class="hidden fixed inset-0 bg-black/50 modal-backdrop z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
+    <div class="flex items-center justify-between px-6 py-4 border-b">
+      <h2 class="font-bold text-lg text-gray-800">Record Payment</h2>
+      <button onclick="hideModal('payModal')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="p-6">
+      <input type="hidden" id="pay-feeId">
+      <div class="mb-4"><label class="label">Amount Paid</label><input type="number" id="pay-amount" class="input" min="1"></div>
+      <div class="mb-5">
+        <label class="label">Payment Method</label>
+        <select id="pay-method" class="select">
+          <option value="cash">Cash</option><option value="bank">Bank Transfer</option>
+          <option value="online">Online Payment</option><option value="cheque">Cheque</option>
+        </select>
+      </div>
+      <div class="flex gap-3">
+        <button onclick="hideModal('payModal')" class="btn btn-secondary flex-1">Cancel</button>
+        <button onclick="confirmPayment()" class="btn btn-success flex-1"><i class="fas fa-check"></i> Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Receipt Modal -->
+<div id="receiptModal" class="hidden fixed inset-0 bg-black/50 modal-backdrop z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+    <div class="flex items-center justify-between px-6 py-4 border-b no-print">
+      <h2 class="font-bold text-lg text-gray-800">Fee Receipt</h2>
+      <div class="flex gap-2">
+        <button onclick="window.print()" class="btn btn-primary !py-1 !px-3 text-xs"><i class="fas fa-print"></i> Print</button>
+        <button onclick="hideModal('receiptModal')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"><i class="fas fa-times"></i></button>
+      </div>
+    </div>
+    <div id="receiptContent" class="p-6"></div>
+  </div>
+</div>
+
+<script src="../js/api.js?v=10"></script>
+<script src="../js/auth.js?v=10"></script>
+<script src="../js/layout.js?v=10"></script>
+<script>
+  Auth.requireAuth(['admin']);
+  buildLayout('Fee Management', 'admin');
+  const pageAction = new URLSearchParams(window.location.search).get('action');
+  let fees = [];
+  let feeStudents = [];
+
+  function clearPageAction() {
+    if (!window.location.search) return;
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+
+  async function loadFeeStudents(selectedId = '') {
+    try {
+      const res = await api.get('/students', { status: 'active', limit: 500 });
+      feeStudents = res.data || [];
+      const select = document.getElementById('f-studentId');
+      select.innerHTML = '<option value="">Select Student</option>' + feeStudents.map((student) => `
+        <option value="${student._id}">${student.studentId} - ${student.name} (${student.class} - ${student.section})</option>
+      `).join('');
+      if (selectedId) select.value = selectedId;
+    } catch (err) {
+      showToast('Failed to load students: ' + err.message, 'error');
+    }
+  }
+
+  async function loadStats() {
+    try {
+      const res = await api.get('/fees/stats/summary');
+      document.getElementById('stat-total').textContent = formatCurrency(res.data.totalAmount);
+      document.getElementById('stat-collected').textContent = formatCurrency(res.data.collected);
+      document.getElementById('stat-unpaid').textContent = res.data.unpaidCount;
+    } catch {}
+  }
+
+  async function loadFees() {
+    const status = document.getElementById('fStatusFilter').value;
+    const feeType = document.getElementById('fTypeFilter').value;
+    const params = {};
+    if (status) params.status = status;
+    if (feeType) params.feeType = feeType;
+    try {
+      const res = await api.get('/fees', params);
+      fees = res.data;
+      renderTable(fees);
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  function renderTable(data) {
+    const tb = document.getElementById('feeTable');
+    const statusBadge = { paid: 'badge-green', unpaid: 'badge-red', partial: 'badge-yellow' };
+    if (!data.length) { tb.innerHTML = '<tr><td colspan="7" class="text-center py-10 text-gray-400">No fee records</td></tr>'; return; }
+    tb.innerHTML = data.map(f => `
+      <tr class="hover:bg-gray-50">
+        <td class="px-4 py-3 text-xs font-mono text-gray-500">${f.receiptNo}</td>
+        <td class="px-4 py-3">
+          <div class="text-sm font-semibold">${f.studentId?.name || 'Unknown'}</div>
+          <div class="text-xs text-gray-400">${f.studentId?.class || ''} - ${f.studentId?.section || ''}</div>
+        </td>
+        <td class="px-4 py-3 text-sm capitalize">${f.feeType}</td>
+        <td class="px-4 py-3 text-sm font-semibold">${formatCurrency(f.amount)}</td>
+        <td class="px-4 py-3 text-sm text-gray-600">${formatDate(f.dueDate)}</td>
+        <td class="px-4 py-3"><span class="badge ${statusBadge[f.status]}">${f.status}</span></td>
+        <td class="px-4 py-3">
+          <div class="flex gap-1">
+            ${f.status !== 'paid' ? `<button onclick="openPay('${f._id}',${f.amount})" class="btn btn-success !py-1 !px-2 text-xs"><i class="fas fa-check"></i></button>` : ''}
+            <button onclick="showReceipt('${f._id}')" class="btn btn-secondary !py-1 !px-2 text-xs" title="View Receipt"><i class="fas fa-receipt"></i></button>
+            <button onclick="window.open('/api/fees/${f._id}/receipt','_blank')" class="btn btn-primary !py-1 !px-2 text-xs" title="Download PDF Receipt"><i class="fas fa-file-pdf"></i></button>
+            <button onclick="deleteFee('${f._id}')" class="btn btn-danger !py-1 !px-2 text-xs"><i class="fas fa-trash"></i></button>
+          </div>
+        </td>
+      </tr>`).join('');
+  }
+
+  function openAddFee() {
+    document.getElementById('feeForm').reset();
+    document.getElementById('f-dueDate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('f-year').value = new Date().getFullYear();
+    showModal('feeModal');
+    window.setTimeout(() => document.getElementById('f-studentId')?.focus(), 50);
+  }
+
+  async function saveFee(e) {
+    e.preventDefault();
+    const data = {
+      studentId: document.getElementById('f-studentId').value,
+      feeType: document.getElementById('f-type').value,
+      amount: document.getElementById('f-amount').value,
+      dueDate: document.getElementById('f-dueDate').value,
+      month: document.getElementById('f-month').value,
+      year: document.getElementById('f-year').value,
+      remarks: document.getElementById('f-remarks').value
+    };
+    try {
+      await api.post('/fees', data);
+      showToast('Fee record added!', 'success');
+      hideModal('feeModal');
+      loadFees(); loadStats();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  function openPay(id, amount) {
+    document.getElementById('pay-feeId').value = id;
+    document.getElementById('pay-amount').value = amount;
+    showModal('payModal');
+  }
+
+  async function confirmPayment() {
+    const id = document.getElementById('pay-feeId').value;
+    const paidAmount = document.getElementById('pay-amount').value;
+    const paymentMethod = document.getElementById('pay-method').value;
+    try {
+      await api.put(`/fees/${id}/pay`, { paidAmount, paymentMethod });
+      showToast('Payment recorded! Receipt WhatsApp sent.', 'success');
+      hideModal('payModal');
+      loadFees(); loadStats();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  async function showReceipt(id) {
+    try {
+      const res = await api.get(`/fees/${id}`);
+      const f = res.data;
+      document.getElementById('receiptContent').innerHTML = `
+        <div class="border-b pb-4 mb-4 text-center">
+          <h3 class="text-lg font-bold">Bright Future School</h3>
+          <p class="text-xs text-gray-500">Fee Receipt</p>
+        </div>
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between"><span class="text-gray-500">Receipt No:</span><span class="font-mono font-bold">${f.receiptNo}</span></div>
+          <div class="flex justify-between"><span class="text-gray-500">Date:</span><span>${formatDate(f.paidDate || f.createdAt)}</span></div>
+          <div class="flex justify-between"><span class="text-gray-500">Student:</span><span class="font-semibold">${f.studentId?.name}</span></div>
+          <div class="flex justify-between"><span class="text-gray-500">Class:</span><span>${f.studentId?.class} - ${f.studentId?.section}</span></div>
+          <div class="flex justify-between"><span class="text-gray-500">Parent:</span><span>${f.studentId?.parentName || '-'}</span></div>
+          <div class="flex justify-between border-t pt-2 mt-2"><span class="text-gray-500">Fee Type:</span><span class="capitalize">${f.feeType}</span></div>
+          <div class="flex justify-between"><span class="text-gray-500">Amount:</span><span class="font-bold text-lg">${formatCurrency(f.amount)}</span></div>
+          <div class="flex justify-between"><span class="text-gray-500">Paid:</span><span class="font-bold text-green-600">${formatCurrency(f.paidAmount)}</span></div>
+          <div class="flex justify-between"><span class="text-gray-500">Method:</span><span class="capitalize">${f.paymentMethod || '-'}</span></div>
+          <div class="flex justify-between"><span class="text-gray-500">Status:</span><span class="badge ${f.status==='paid'?'badge-green':f.status==='partial'?'badge-yellow':'badge-red'}">${f.status}</span></div>
+        </div>
+        <div class="border-t mt-4 pt-4 text-center text-xs text-gray-400">Thank you for your payment!</div>`;
+      showModal('receiptModal');
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  async function deleteFee(id) {
+    if (!confirm('Delete this fee record?')) return;
+    try { await api.delete(`/fees/${id}`); showToast('Deleted', 'success'); loadFees(); loadStats(); }
+    catch (err) { showToast(err.message, 'error'); }
+  }
+
+  async function sendReminders() {
+    if (!confirm('Send WhatsApp fee reminders to all parents with unpaid fees?')) return;
+    try {
+      const res = await api.post('/fees/remind', {});
+      showToast(res.message, 'success');
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  async function initPage() {
+    await loadFeeStudents();
+    loadStats();
+    loadFees();
+
+    if (pageAction === 'collect' || pageAction === 'add') {
+      openAddFee();
+      if (!feeStudents.length) {
+        showToast('Add a student first before creating a fee record.', 'info');
+      }
+      clearPageAction();
+    }
+  }
+
+  initPage();
+  window.__pageInlineScriptExecuted = true;
+</script>
+<script src="../js/inline-fallback.js?v=1"></script>
+</body>
+</html>
+

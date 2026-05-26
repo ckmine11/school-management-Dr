@@ -1,0 +1,177 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mark Attendance | Teacher</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-gray-50">
+<div class="flex h-screen overflow-hidden">
+  <div id="sidebar"></div>
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <div id="topbar"></div>
+    <main class="flex-1 overflow-y-auto p-6">
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-5">
+        <h2 class="font-bold text-gray-800 mb-4">Mark Attendance</h2>
+        <div class="flex flex-wrap gap-3 items-end">
+          <div>
+            <label class="label">Class</label>
+            <select id="attClass" class="select w-36">
+              <option value="">Select Class</option>
+              <option value="Class 1">Class 1</option>
+              <option value="Class 2">Class 2</option>
+              <option value="Class 3">Class 3</option>
+              <option value="Class 4">Class 4</option>
+              <option value="Class 5">Class 5</option>
+              <option value="Class 6">Class 6</option>
+              <option value="Class 7">Class 7</option>
+              <option value="Class 8">Class 8</option>
+              <option value="Class 9">Class 9</option>
+              <option value="Class 10">Class 10</option>
+              <option value="Class 11">Class 11</option>
+              <option value="Class 12">Class 12</option>
+            </select>
+          </div>
+          <div>
+            <label class="label">Section</label>
+            <select id="attSection" class="select w-28">
+              <option value="">Section</option>
+              <option>A</option><option>B</option><option>C</option><option>D</option>
+            </select>
+          </div>
+          <div>
+            <label class="label">Date</label>
+            <input type="date" id="attDate" class="input w-40">
+          </div>
+          <button onclick="loadStudents()" class="btn btn-primary"><i class="fas fa-search"></i> Load</button>
+        </div>
+      </div>
+
+      <div id="attTableWrap" class="hidden bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b">
+          <div><h3 class="font-bold text-gray-800">Students</h3><p class="text-sm text-gray-500" id="attInfo"></p></div>
+          <div class="flex gap-2">
+            <button onclick="markAll('present')" class="btn btn-success !py-1 !px-3 text-xs">All Present</button>
+            <button onclick="markAll('absent')" class="btn btn-danger !py-1 !px-3 text-xs">All Absent</button>
+            <button onclick="submit()" class="btn btn-primary"><i class="fas fa-save"></i> Save</button>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50"><tr>
+              <th class="text-left px-4 py-3 text-gray-500">#</th>
+              <th class="text-left px-4 py-3 text-gray-500">Student</th>
+              <th class="text-left px-4 py-3 text-gray-500">Roll No</th>
+              <th class="text-left px-4 py-3 text-gray-500">Status</th>
+            </tr></thead>
+            <tbody id="attTable" class="divide-y divide-gray-100"></tbody>
+          </table>
+        </div>
+        <div class="px-5 py-3 bg-gray-50 border-t flex gap-4 text-sm">
+          <span class="text-green-600 font-semibold">Present: <span id="cnt-present">0</span></span>
+          <span class="text-red-500 font-semibold">Absent: <span id="cnt-absent">0</span></span>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="../js/api.js?v=10"></script>
+<script src="../js/auth.js?v=10"></script>
+<script src="../js/layout.js?v=10"></script>
+<script>
+  const user = Auth.requireAuth(['teacher', 'admin']);
+  const layoutRole = user?.role === 'admin' ? 'admin' : 'teacher';
+  buildLayout('Mark Attendance', layoutRole);
+  document.getElementById('attDate').value = new Date().toISOString().split('T')[0];
+  let students = [];
+
+  function setupTeacherFilters() {
+    if (user?.role !== 'teacher' || !Array.isArray(user.assignedClasses) || !user.assignedClasses.length) return;
+
+    const classSelect = document.getElementById('attClass');
+    const sectionSelect = document.getElementById('attSection');
+    const uniqueClasses = [...new Set(user.assignedClasses.map((entry) => entry.class))];
+
+    classSelect.innerHTML = '<option value="">Select Class</option>' + uniqueClasses.map((cls) => `<option value="${cls}">${cls}</option>`).join('');
+
+    const refreshSections = () => {
+      const selectedClass = classSelect.value;
+      const sections = user.assignedClasses
+        .filter((entry) => !selectedClass || entry.class === selectedClass)
+        .map((entry) => entry.section);
+      const uniqueSections = [...new Set(sections)];
+      sectionSelect.innerHTML = '<option value="">Section</option>' + uniqueSections.map((section) => `<option value="${section}">${section}</option>`).join('');
+
+      if (uniqueClasses.length === 1) {
+        classSelect.value = uniqueClasses[0];
+      }
+      if (uniqueSections.length === 1) {
+        sectionSelect.value = uniqueSections[0];
+      }
+    };
+
+    classSelect.addEventListener('change', refreshSections);
+    refreshSections();
+  }
+
+  async function loadStudents() {
+    const cls = document.getElementById('attClass').value;
+    const section = document.getElementById('attSection').value;
+    const date = document.getElementById('attDate').value;
+    if (!cls || !section) return showToast('Select class and section', 'error');
+    try {
+      const [studRes, existRes] = await Promise.all([
+        api.get('/students', { class: cls, section, status: 'active', limit: 200 }),
+        api.get('/attendance', { class: cls, section, date })
+      ]);
+      students = studRes.data;
+      const existMap = {};
+      existRes.data.forEach(r => { existMap[r.studentId?._id || r.studentId] = r.status; });
+
+      document.getElementById('attTableWrap').classList.remove('hidden');
+      document.getElementById('attInfo').textContent = `${cls}-${section} | ${new Date(date).toLocaleDateString('en-IN')} | ${students.length} students`;
+
+      document.getElementById('attTable').innerHTML = students.map((s, i) => `
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-2 text-sm text-gray-400">${i+1}</td>
+          <td class="px-4 py-2"><div class="font-semibold text-sm">${s.name}</div><div class="text-xs text-gray-400">${s.studentId}</div></td>
+          <td class="px-4 py-2 text-sm">${s.rollNo || '-'}</td>
+          <td class="px-4 py-2">
+            <select class="att-status select !w-auto text-xs" data-id="${s._id}" onchange="updateCounts()">
+              <option value="present" ${existMap[s._id]==='present'||!existMap[s._id]?'selected':''}>Present</option>
+              <option value="absent" ${existMap[s._id]==='absent'?'selected':''}>Absent</option>
+              <option value="late" ${existMap[s._id]==='late'?'selected':''}>Late</option>
+            </select>
+          </td>
+        </tr>`).join('');
+      updateCounts();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  function markAll(status) { document.querySelectorAll('.att-status').forEach(s => s.value = status); updateCounts(); }
+  function updateCounts() {
+    const vals = [...document.querySelectorAll('.att-status')].map(s => s.value);
+    document.getElementById('cnt-present').textContent = vals.filter(v => v === 'present').length;
+    document.getElementById('cnt-absent').textContent = vals.filter(v => v === 'absent').length;
+  }
+
+  async function submit() {
+    const cls = document.getElementById('attClass').value;
+    const section = document.getElementById('attSection').value;
+    const date = document.getElementById('attDate').value;
+    const records = [...document.querySelectorAll('.att-status')].map(s => ({ studentId: s.dataset.id, status: s.value }));
+    try {
+      await api.post('/attendance/mark', { class: cls, section, date, records });
+      showToast('Attendance saved!', 'success');
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  setupTeacherFilters();
+  window.__pageInlineScriptExecuted = true;
+</script>
+<script src="../js/inline-fallback.js?v=1"></script>
+</body>
+</html>
+
