@@ -1328,4 +1328,45 @@ On Oracle Cloud (or any VPS), open port **80** in the Security List / firewall r
 
 ---
 
+---
+
+## Scaling, Backup & High Availability
+
+See [SCALING.md](SCALING.md) for the complete guide. Quick summary:
+
+### Keep App Always Running
+
+Run once after deploying on server:
+```bash
+sudo bash scripts/setup-server.sh
+```
+
+This sets up:
+- Docker auto-start on server reboot
+- App auto-restart on crash (15 sec)
+- Daily database backup at 2:00 AM
+- Health check every 5 minutes (auto-restarts if API fails)
+- Log rotation (14 days)
+
+### Daily Backup
+
+```bash
+# Manual backup anytime
+bash scripts/backup.sh
+
+# Restore from a backup
+bash scripts/restore.sh 2026-05-26_02-00
+
+# View backup logs
+tail -f /home/ubuntu/logs/backup.log
+```
+
+Backups are stored in `/home/ubuntu/backups/school-db/` — last 7 days kept automatically.
+
+### DB Scaling
+
+Single-node MongoDB handles up to ~10,000 students comfortably. For larger scale, see [SCALING.md → DB Scaling](SCALING.md#4-db-scaling) for MongoDB Atlas and multi-VM options.
+
+---
+
 *For issues or support, check the GitHub repository: https://github.com/ckmine11/school-management-Dr*

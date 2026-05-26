@@ -249,6 +249,27 @@ docker exec -it school-backend sh
 
 ---
 
+## Backup & High Availability
+
+Run once after deploying on server — sets up everything automatically:
+
+```bash
+sudo bash scripts/setup-server.sh
+```
+
+| Feature | Details |
+|---|---|
+| App auto-restart | Crash होने पर 15 sec में restart |
+| Server reboot recovery | Docker + app auto-start on boot |
+| Daily backup | रोज़ रात 2 AM, 7 दिन की history |
+| Health check | हर 5 min, fail होने पर auto-restart |
+| Manual backup | `bash scripts/backup.sh` |
+| Restore | `bash scripts/restore.sh <date>` |
+
+See [SCALING.md](SCALING.md) for DB scaling options and full details.
+
+---
+
 ## Full Documentation
 
 See [DOCUMENTATION.md](DOCUMENTATION.md) for:
