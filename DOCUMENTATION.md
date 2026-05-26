@@ -13,6 +13,7 @@
 3. [Tech Stack](#3-tech-stack)
 4. [Folder Structure](#4-folder-structure)
 5. [Environment Variables](#5-environment-variables)
+   - [5a. How to Generate JWT_SECRET](#5a-how-to-generate-jwt_secret)
 6. [Installation & Deployment](#6-installation--deployment)
 7. [Default Credentials](#7-default-credentials)
 8. [User Roles & Permissions](#8-user-roles--permissions)
@@ -277,10 +278,132 @@ ONESIGNAL_REST_API_KEY=
 
 ### Important Notes
 
-- **JWT_SECRET** must be at least 32 characters. Use `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"` to generate one.
+- **JWT_SECRET** must be at least 32 characters. See Section 5a below for full generation guide.
 - **ADMIN_RECOVERY_SECRET** is used to reset the admin password if you get locked out. Keep it safe.
 - **FRONTEND_URL** must match your actual domain or IP, e.g., `http://152.67.x.x` for Oracle Cloud.
 - Never commit `.env` to Git — it is already in `.gitignore`.
+
+---
+
+## 5a. How to Generate JWT_SECRET
+
+### What is JWT_SECRET?
+
+JWT (JSON Web Token) is how the app verifies that a logged-in user is genuine. The `JWT_SECRET` is a long random string used to **sign** and **verify** these tokens. If someone gets this key, they can fake any login — so it must be:
+
+- Long (minimum 32 characters, recommended 64+)
+- Random (not a dictionary word or phrase)
+- Kept private (only in `.env`, never shared or committed to Git)
+
+---
+
+### Method 1 — Node.js (Recommended, works everywhere)
+
+If Node.js is installed on your machine:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+```
+
+**Example output:**
+```
+8771252d04aa6012a6d2444e8e6ffc9aceb53814d1baddf60b162a6e10a965a1
+2d7fb5a1015d7e4ce269e47417466d9ef37259d3da7405fde8e1946a0f33f8d1
+```
+
+Copy this entire output and paste it as your `JWT_SECRET` value.
+
+---
+
+### Method 2 — Inside the Docker Container (if Node.js not on your PC)
+
+After starting the containers:
+
+```bash
+docker exec school-backend node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+```
+
+Copy the output and paste into your `.env` file.
+
+---
+
+### Method 3 — Python (if Python is installed)
+
+```bash
+python3 -c "import secrets; print(secrets.token_hex(64))"
+```
+
+---
+
+### Method 4 — OpenSSL (Linux/Mac terminal)
+
+```bash
+openssl rand -hex 64
+```
+
+---
+
+### Method 5 — PowerShell (Windows)
+
+```powershell
+-join ((1..64) | ForEach-Object { '{0:x}' -f (Get-Random -Maximum 16) })
+```
+
+---
+
+### Step-by-Step: Generate and Set JWT_SECRET
+
+**Step 1** — Open terminal and run:
+```bash
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+```
+
+**Step 2** — You will see something like:
+```
+a3f8c2e1b4d7903abc56ef1234567890abcdef1234567890abcdef1234567890ab
+```
+
+**Step 3** — Open your `.env` file:
+```bash
+nano .env          # Linux/Mac
+notepad .env       # Windows
+```
+
+**Step 4** — Find the line:
+```
+JWT_SECRET=your_64_char_random_hex_string
+```
+
+**Step 5** — Replace the placeholder with your generated value:
+```
+JWT_SECRET=a3f8c2e1b4d7903abc56ef1234567890abcdef1234567890abcdef1234567890ab
+```
+
+**Step 6** — Save the file and restart the backend:
+```bash
+docker-compose restart backend
+```
+
+---
+
+### Rules for JWT_SECRET
+
+| Rule | Why |
+|---|---|
+| Minimum 32 characters (recommended 64+) | Shorter = easier to brute-force |
+| Fully random — never a word or sentence | Predictable strings can be guessed |
+| Never commit to Git | Anyone with the key can forge tokens |
+| Different for every deployment | If one client's key leaks, others stay safe |
+| Store only in `.env` file | `.env` is in `.gitignore` and never uploaded |
+
+---
+
+### What happens if JWT_SECRET changes?
+
+If you change `JWT_SECRET` after users are already logged in:
+- All existing login sessions become invalid immediately
+- All users will be logged out and must log in again
+- This is expected behaviour — new tokens are signed with the new key
 
 ---
 

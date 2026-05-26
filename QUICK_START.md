@@ -10,12 +10,43 @@ cp .env.example .env
 
 Edit `.env` — set these required values:
 ```env
-JWT_SECRET=<run: node -e "console.log(require('crypto').randomBytes(64).toString('hex'))">
+JWT_SECRET=        ← see below how to generate
 ADMIN_RECOVERY_SECRET=YourSecretPhrase
 SCHOOL_NAME=Your School Name
 SCHOOL_EMAIL=admin@yourschool.com
 FRONTEND_URL=http://localhost        # change to your server IP when deploying
 ```
+
+### Generating JWT_SECRET
+
+Run this command — copy the output and paste it as `JWT_SECRET`:
+
+```bash
+# Method 1 — Node.js (recommended)
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+
+# Method 2 — If Node.js not installed, use the running container
+docker exec school-backend node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+
+# Method 3 — Python
+python3 -c "import secrets; print(secrets.token_hex(64))"
+
+# Method 4 — OpenSSL (Linux/Mac)
+openssl rand -hex 64
+```
+
+**Example output (use YOUR generated value, not this one):**
+```
+8771252d04aa6012a6d2444e8e6ffc9aceb53814d1baddf60b162a6e10a965a1
+2d7fb5a1015d7e4ce269e47417466d9ef37259d3da7405fde8e1946a0f33f8d1
+```
+
+Paste the full output on one line in `.env`:
+```env
+JWT_SECRET=8771252d04aa6012a6d2444e8e6ffc9aceb53814d1baddf60b162a6e10a965a12d7fb5a1015d7e4ce269e47417466d9ef37259d3da7405fde8e1946a0f33f8d1
+```
+
+> Never use the example value above. Always generate a fresh one for each deployment.
 
 ## 2. Start
 
