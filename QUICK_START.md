@@ -143,7 +143,46 @@ curl http://localhost:5000/api/health
 
 ---
 
+## Before Client Handover — Checklist
+
+```
+☐  .env updated with real values:
+     - JWT_SECRET        → fresh 64-char random hex
+     - ADMIN_RECOVERY_SECRET → memorable secret phrase
+     - FRONTEND_URL      → http://SERVER_IP or https://domain.com
+     - SCHOOL_NAME       → client's school name
+     - SCHOOL_EMAIL      → client's email
+
+☐  Port 80 open in server firewall / security group
+   (Port 5000 must stay closed — only Nginx on 80 is public)
+
+☐  docker-compose up -d --build  (fresh build with real .env)
+
+☐  docker exec school-backend node seed.js  (first time only)
+   Note: safe to run again — skips if admin already exists
+
+☐  First login: admin@school.com / admin123
+   → Change admin password immediately after login
+
+☐  WhatsApp connected:
+     Admin → WhatsApp Setup → Connect WhatsApp → Scan QR
+
+☐  Real data entered:
+     → Students added (with parent phone numbers for WhatsApp)
+     → Teachers added with assigned classes
+     → Timetable set up per class/section
+     → Exam schedule added
+
+☐  Test end-to-end:
+     → Mark one student absent → parent gets WhatsApp
+     → Record one fee payment → parent gets receipt on WhatsApp
+     → Download one fee receipt PDF
+     → Download one student ID card PDF
+```
+
+---
+
 ## Full Documentation
 
-- [DOCUMENTATION.md](DOCUMENTATION.md) — Complete technical reference
+- [DOCUMENTATION.md](DOCUMENTATION.md) — Complete technical reference + Production Readiness Summary
 - [USER_GUIDE_HINDI.md](USER_GUIDE_HINDI.md) — Hindi user guide for school staff

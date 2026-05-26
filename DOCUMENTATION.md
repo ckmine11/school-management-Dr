@@ -1113,4 +1113,96 @@ docker-compose logs mongodb
 
 ---
 
+## Production Deployment Checklist
+
+Complete this checklist before handing over to a client or going live.
+
+### Step 1 — Configure `.env`
+
+```env
+# Generate a fresh secret — never use the placeholder value
+JWT_SECRET=<node -e "console.log(require('crypto').randomBytes(64).toString('hex'))">
+
+# Memorable phrase — used only for admin password recovery
+ADMIN_RECOVERY_SECRET=SomethingOnlyYouKnow
+
+# Must match the actual server IP or domain
+FRONTEND_URL=http://152.67.x.x      # or https://yourdomain.com
+
+# School branding (appears in PDFs and WhatsApp messages)
+SCHOOL_NAME=Your School Name
+SCHOOL_EMAIL=admin@yourschool.com
+```
+
+### Step 2 — Deploy
+
+```bash
+git clone https://github.com/ckmine11/school-management-Dr.git
+cd school-management-Dr
+cp .env.example .env
+nano .env          # fill in real values from Step 1
+docker-compose up -d --build
+```
+
+Wait ~60 seconds for all three containers to pass their health checks:
+```bash
+docker-compose ps   # all should show "healthy" or "running"
+```
+
+### Step 3 — Seed Admin (first time only)
+
+```bash
+docker exec school-backend node seed.js
+```
+
+The seed script creates the admin account only if no admin exists — it will **not** overwrite data if run again later.
+
+### Step 4 — Open Firewall Port
+
+On Oracle Cloud (or any VPS), open port **80** in the Security List / firewall rules. Port 5000 should remain closed to the public — all traffic goes through Nginx on port 80.
+
+### Step 5 — First Login
+
+1. Open `http://YOUR_SERVER_IP/login.html`
+2. Login: `admin@school.com` / `admin123`
+3. **Change the admin password immediately**
+4. Update school name and email in Settings if needed
+
+### Step 6 — Connect WhatsApp
+
+1. Go to **Admin → WhatsApp Setup**
+2. Click **Connect WhatsApp**
+3. Scan QR code with the school's WhatsApp number
+4. Wait for **Connected ✓** status
+
+### Step 7 — Add Real Data
+
+1. **Students** → Add all students (parent phone numbers are critical for WhatsApp notifications)
+2. **Teachers** → Add all teachers with their assigned classes
+3. **Timetable** → Set up weekly schedule for each class
+4. **Exam Schedule** → Add upcoming exams
+
+---
+
+### Production Readiness Summary
+
+| Component | Status | Notes |
+|---|---|---|
+| Docker Compose | ✅ Ready | 3 containers, healthchecks, named volumes |
+| JWT Authentication | ✅ Ready | httpOnly cookies, `secure` flag in production |
+| Password Hashing | ✅ Ready | bcryptjs, 10 salt rounds |
+| Role-Based Access | ✅ Ready | 4 roles, scope-enforced on every endpoint |
+| Rate Limiting | ✅ Ready | Auth: 15 req/15min, API: 300 req/min |
+| CORS | ✅ Ready | Whitelist only — blocks unknown origins |
+| Nginx Reverse Proxy | ✅ Ready | Gzip, security headers, 100MB upload limit |
+| WhatsApp Queue | ✅ Ready | MongoDB-backed, survives server restarts |
+| Exam Auto-Reminders | ✅ Ready | Cron at 8:00 AM IST daily |
+| PDF Generation | ✅ Ready | Fee receipts + Student ID cards |
+| Mobile Responsive | ✅ Ready | Works on phones and desktops |
+| Data Safety | ✅ Ready | seed.js skips if data already exists |
+| Upload Storage | ✅ Ready | Persistent Docker volume, not lost on rebuild |
+| Session Storage | ✅ Ready | WhatsApp session in Docker volume |
+
+---
+
 *For issues or support, check the GitHub repository: https://github.com/ckmine11/school-management-Dr*
