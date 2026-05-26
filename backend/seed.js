@@ -12,11 +12,20 @@ const seed = async () => {
   await mongoose.connect(process.env.MONGODB_URI);
   console.log('Connected to MongoDB');
 
+  // Safety guard — refuse to run if data already exists
+  const existingAdmin = await User.findOne({ role: 'admin' });
+  if (existingAdmin) {
+    console.log('Admin account already exists. Seed skipped to protect existing data.');
+    console.log('To force re-seed, manually drop the database first.');
+    await mongoose.disconnect();
+    process.exit(0);
+  }
+
   await User.deleteMany({});
   await Student.deleteMany({});
   await Teacher.deleteMany({});
   await Notice.deleteMany({});
-  console.log('Cleared existing data');
+  console.log('Cleared existing data (fresh database confirmed)');
 
   const admin = await User.create({
     name: 'School Admin',
