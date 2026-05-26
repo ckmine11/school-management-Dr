@@ -1342,11 +1342,11 @@ sudo bash scripts/setup-server.sh
 ```
 
 This sets up:
-- Docker auto-start on server reboot
-- App auto-restart on crash (15 sec)
+- Docker auto-start on every server reboot
+- App auto-restart within 15 seconds after a crash
 - Daily database backup at 2:00 AM
-- Health check every 5 minutes (auto-restarts if API fails)
-- Log rotation (14 days)
+- Health check every 5 minutes — auto-restarts containers if API fails
+- Log rotation (14 days kept, older deleted automatically)
 
 ### Daily Backup
 
@@ -1365,7 +1365,7 @@ Backups are stored in `/home/ubuntu/backups/school-db/` — last 7 days kept aut
 
 ### DB Scaling
 
-Single-node MongoDB handles up to ~10,000 students comfortably. For larger scale, see [SCALING.md → DB Scaling](SCALING.md#4-db-scaling) for MongoDB Atlas and multi-VM options.
+Single-node MongoDB handles up to approximately 10,000 students comfortably. For larger scale, see [SCALING.md — DB Scaling](SCALING.md) for MongoDB Atlas and multi-VM options.
 
 ---
 

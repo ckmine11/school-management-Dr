@@ -259,10 +259,10 @@ sudo bash scripts/setup-server.sh
 
 | Feature | Details |
 |---|---|
-| App auto-restart | Crash होने पर 15 sec में restart |
-| Server reboot recovery | Docker + app auto-start on boot |
-| Daily backup | रोज़ रात 2 AM, 7 दिन की history |
-| Health check | हर 5 min, fail होने पर auto-restart |
+| App auto-restart | Restarts within 15 seconds after a crash |
+| Server reboot recovery | Docker + app start automatically on boot |
+| Daily backup | Every night at 2 AM, 7-day history kept |
+| Health check | Every 5 minutes, auto-restarts if API fails |
 | Manual backup | `bash scripts/backup.sh` |
 | Restore | `bash scripts/restore.sh <date>` |
 

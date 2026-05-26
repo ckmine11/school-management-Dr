@@ -2,36 +2,41 @@
 
 ---
 
-## 1. App कभी बंद न हो — Setup Steps
+## 1. Keep the App Always Running
 
-### Step 1: Server पर एक बार यह चलाएं (deploy के बाद)
+### One-Time Server Setup
+
+Run this once after deploying on a fresh server:
 
 ```bash
 cd /home/ubuntu/school-management-Dr
 sudo bash scripts/setup-server.sh
 ```
 
-यह automatically configure करेगा:
-- Docker → server reboot पर auto-start
-- App → crash होने पर auto-restart (15 sec में)
-- Daily backup → रोज़ रात 2:00 AM
-- Health check → हर 5 मिनट (API down हो तो auto-restart)
-- Log rotation → 14 दिन
+This automatically configures:
+
+| What | Details |
+|---|---|
+| Docker auto-start | Starts on every server reboot |
+| App auto-restart | Restarts within 15 seconds after a crash |
+| Daily backup | Runs at 2:00 AM every night |
+| Health check | Every 5 minutes — auto-restarts if API fails |
+| Log rotation | Keeps 14 days of logs, older ones deleted |
 
 ---
 
-### Step 2: Verify करें
+### Verify the Setup
 
 ```bash
-# Service status देखें
+# Check service status
 sudo systemctl status school-app
 
-# Cron jobs देखें
+# Check cron jobs are registered
 crontab -u ubuntu -l
 
-# Reboot test करें
+# Test server reboot recovery
 sudo reboot
-# 2-3 मिनट बाद check करें — app चल रही होगी
+# Wait 2-3 minutes, then open the app in browser — it should be running
 ```
 
 ---
@@ -42,41 +47,42 @@ sudo reboot
 restart: unless-stopped
 ```
 
-| Scenario | क्या होगा |
+| Scenario | Behaviour |
 |---|---|
-| Container crash | 5 सेकंड में auto-restart |
-| Server reboot | Docker start → containers start |
-| docker-compose down | Manual stop (restart नहीं होगा) |
-| API fail (health check) | 5 min में auto-restart |
+| Container crashes | Auto-restarts within 5 seconds |
+| Server reboots | Docker starts → containers start automatically |
+| `docker-compose down` | Stops manually (will not auto-restart until next reboot or manual start) |
+| API health check fails | Auto-restarts within 5 minutes |
 
 ---
 
 ## 2. Daily Backup
 
-### Backup कहाँ जाता है
+### Where Backups Are Stored
 
 ```
 /home/ubuntu/backups/school-db/
-├── 2026-05-26_02-00.tar.gz    ← सोमवार की backup
-├── 2026-05-27_02-00.tar.gz    ← मंगलवार की backup
+├── 2026-05-26_02-00.tar.gz    ← Monday backup
+├── 2026-05-27_02-00.tar.gz    ← Tuesday backup
 ├── 2026-05-28_02-00.tar.gz
-...7 दिन की backups रहती हैं, पुरानी auto-delete
+...
+(last 7 days kept — older backups deleted automatically)
 ```
 
-### Manually Backup लें (जब चाहें)
+### Run a Manual Backup (anytime)
 
 ```bash
 bash /home/ubuntu/school-management-Dr/scripts/backup.sh
 ```
 
-### Backup Size
+### Backup File Size
 
-एक स्कूल (500 students) के लिए backup typically:
-- Daily dump: 1–5 MB
-- 7 दिन का total: ~10–35 MB
-- Oracle Cloud free storage (200GB) में हज़ारों backups आ सकते हैं
+For a typical school with 500 students:
+- Single daily backup: 1–5 MB (compressed)
+- 7 days total: approximately 10–35 MB
+- Oracle Cloud free storage (200 GB) can hold thousands of backups
 
-### Backup Log देखें
+### View Backup Logs
 
 ```bash
 tail -f /home/ubuntu/logs/backup.log
@@ -84,80 +90,93 @@ tail -f /home/ubuntu/logs/backup.log
 
 ---
 
-## 3. Restore करना (ज़रूरत पड़ने पर)
+## 3. Restore from a Backup
 
 ```bash
-# Available backups देखें
+# List available backups
 ls /home/ubuntu/backups/school-db/
 
-# Restore करें (date से)
+# Restore from a specific date
 bash /home/ubuntu/school-management-Dr/scripts/restore.sh 2026-05-26_02-00
 ```
 
-Restore script:
-- Confirm माँगेगा (yes type करना होगा)
-- Current database drop करेगा
-- Backup से restore करेगा
+The restore script:
+- Asks for confirmation before proceeding (type `yes`)
+- Drops the current database
+- Restores data from the selected backup
 
 ---
 
 ## 4. DB Scaling
 
-### अभी (Single Node MongoDB) — कब तक काफी है?
+### Current Setup — Single Node MongoDB
 
-| छात्र | Teachers | Records/year | Single Node |
+Single-node MongoDB is sufficient for most schools:
+
+| Students | Teachers | Records/year | Single Node |
 |---|---|---|---|
-| < 2,000 | < 100 | < 500,000 | ✅ काफी है |
-| 2,000–10,000 | 100–500 | 500K–2M | ✅ ठीक है |
-| > 10,000 | > 500 | > 2M | ⚠️ Review करें |
+| Up to 2,000 | Up to 100 | Up to 500,000 | Sufficient |
+| 2,000 – 10,000 | 100 – 500 | 500K – 2M | Works fine |
+| More than 10,000 | More than 500 | More than 2M | Consider scaling |
 
-**एक सामान्य स्कूल के लिए single node MongoDB कई सालों तक काफी है।**
+**For a typical school, single-node MongoDB will comfortably serve for many years.**
 
 ---
 
-### अगर बड़ा करना हो — Options
+### Scaling Options
 
-#### Option A: MongoDB Indexes Optimize करें (Free, Already Done)
+#### Option A — Optimize MongoDB Indexes (Free — Already Done)
 
-सभी ज़रूरी indexes पहले से बने हैं:
-- `studentId + date` (attendance)
-- `class + section` (bulk queries)
-- `status` (active students filter)
-- `parentPhone` (WhatsApp broadcasts)
-- `year + month` (fee reports)
+All required indexes are already created:
 
-#### Option B: MongoDB Atlas (Cloud Hosted)
+| Index | Used For |
+|---|---|
+| `studentId + date` | Attendance lookups |
+| `class + section` | Bulk class queries |
+| `status` | Active student filters |
+| `parentPhone` | WhatsApp broadcast targets |
+| `year + month` | Fee reports |
 
-अगर database को अलग server पर move करना हो:
+No action needed — this is already in place.
+
+---
+
+#### Option B — MongoDB Atlas (Cloud Hosted)
+
+Move the database to a managed cloud service:
 
 ```env
-# .env में change करें:
+# Change in .env:
 MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/schoolmanagement
 ```
 
-Plans:
-- **M0 Free:** 512MB — demo के लिए ठीक, production के लिए छोटा
-- **M2 ($9/month):** 2GB — छोटे स्कूल के लिए काफी
-- **M10 ($57/month):** Dedicated — large school
+| Plan | Storage | Cost | Suitable For |
+|---|---|---|---|
+| M0 Free | 512 MB | Free | Demo only |
+| M2 | 2 GB | $9/month | Small school |
+| M10 | Dedicated | $57/month | Large school |
 
-#### Option C: दूसरा Free Oracle VM (MongoDB अलग)
+---
 
-Oracle Cloud पर दूसरा free ARM VM लें, उस पर MongoDB चलाएं:
+#### Option C — Separate Oracle VM for MongoDB (Free)
+
+Create a second free Oracle ARM VM and run MongoDB there:
 
 ```env
-MONGODB_URI=mongodb://SECOND_VM_IP:27017/schoolmanagement
+# Change in .env:
+MONGODB_URI=mongodb://SECOND_VM_PRIVATE_IP:27017/schoolmanagement
 ```
 
-> ⚠️ इस case में MongoDB का port 27017 सिर्फ internal network में खुला रखें, public नहीं।
+> Note: Keep MongoDB port 27017 accessible only on the internal private network — never expose it to the public internet.
 
 ---
 
 ## 5. Health Check Monitoring
 
-### Logs देखें
+### View Logs
 
 ```bash
-# Health check log (app up है या नहीं)
+# Health check log (is the API up or down?)
 tail -f /home/ubuntu/logs/healthcheck.log
 
 # App log (docker-compose output)
@@ -166,7 +185,7 @@ tail -f /home/ubuntu/logs/app.log
 # Container status
 docker-compose ps
 
-# Live container stats (CPU, RAM)
+# Live CPU and RAM usage per container
 docker stats
 ```
 
@@ -185,37 +204,35 @@ docker stats
 
 ---
 
-## 6. Oracle Cloud Free Tier — Maximum Configuration
+## 6. Oracle Cloud Free Tier — Resource Limits
 
-Oracle Cloud ARM Free Tier में यह सब free मिलता है:
-
-| Resource | Free Limit | हमारा Use |
+| Resource | Free Limit | Our Usage |
 |---|---|---|
-| OCPU | 4 | App + DB के लिए काफी |
-| RAM | 24 GB | WhatsApp (2GB) + MongoDB (2GB) + बाकी free |
+| OCPU | 4 | App + DB — more than enough |
+| RAM | 24 GB | WhatsApp (2 GB) + MongoDB (2 GB) + plenty remaining |
 | Boot Storage | 200 GB total | 100 GB boot volume |
-| Object Storage | 20 GB | Backups के लिए |
-| Network Bandwidth | 10 TB/month | School के लिए बहुत ज़्यादा |
+| Object Storage | 20 GB | Available for offsite backups |
+| Network Bandwidth | 10 TB/month | Far more than a school needs |
 
 ---
 
-## 7. Summary — Production Setup Checklist
+## 7. Production Setup Checklist
 
 ```bash
-# Server पर पहली बार (one-time):
+# One-time setup after first deploy:
 sudo bash scripts/setup-server.sh
 
-# यह verify करें:
-sudo systemctl status school-app     # ✅ active (running)
-crontab -u ubuntu -l                 # ✅ backup + healthcheck crons दिखें
-ls /home/ubuntu/backups/school-db/   # ✅ first backup दिखे
+# Verify:
+sudo systemctl status school-app        # should show: active (running)
+crontab -u ubuntu -l                    # backup + healthcheck crons should appear
+ls /home/ubuntu/backups/school-db/      # first backup file should exist
 
-# रोज़ check करें:
-tail -5 /home/ubuntu/logs/backup.log      # backup हुआ?
-tail -5 /home/ubuntu/logs/healthcheck.log # app ठीक है?
-docker-compose ps                          # सब containers running?
+# Daily monitoring:
+tail -5 /home/ubuntu/logs/backup.log        # did the backup run?
+tail -5 /home/ubuntu/logs/healthcheck.log   # is the app healthy?
+docker-compose ps                           # all containers running?
 ```
 
 ---
 
-*इस guide से app 24/7 चलती रहेगी, data safe रहेगा, और कोई भी failure 5 मिनट में auto-recover हो जाएगी।*
+*With this setup, the application runs 24/7, data is backed up daily, and any failure recovers automatically within 5 minutes.*
