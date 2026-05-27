@@ -238,7 +238,13 @@ window.toggleNotifDropdown = function () {
   if (!dd) return;
   const isOpen = dd.style.display !== 'none';
   dd.style.display = isOpen ? 'none' : 'block';
-  if (!isOpen) fetchNotifications();
+  if (!isOpen) {
+    fetchNotifications();
+    // Mark all current notifications as seen — badge clears immediately
+    localStorage.setItem('notifLastSeen', Date.now().toString());
+    const badge = document.getElementById('bellBadge');
+    if (badge) badge.style.display = 'none';
+  }
 };
 
 function _timeAgo(dateStr) {
@@ -262,7 +268,10 @@ async function fetchNotifications() {
     const countLabel = document.getElementById('notifCountLabel');
     if (!badge || !list) return;
 
-    const unread = data.unread || 0;
+    // Count only items newer than the last time user opened the bell
+    const lastSeen = parseInt(localStorage.getItem('notifLastSeen') || '0');
+    const unread = (data.items || []).filter(i => new Date(i.time).getTime() > lastSeen).length;
+
     if (unread > 0) {
       badge.style.display = 'flex';
       badge.textContent = unread > 99 ? '99+' : unread;

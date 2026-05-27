@@ -46,12 +46,12 @@ router.get('/inbox', protect, async (req, res) => {
     // Upcoming exams (next 7 days) — all roles
     const sevenDaysLater = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     const exams = await ExamSchedule.find({ examDate: { $gte: new Date(), $lte: sevenDaysLater } })
-      .sort({ examDate: 1 }).limit(5).select('subject class examDate examType');
+      .sort({ examDate: 1 }).limit(5).select('subject class examDate examType createdAt');
     exams.forEach(e => items.push({
       type: 'exam',
       title: `Exam: ${e.subject} (${e.class})`,
       subtitle: `${e.examType} · ${new Date(e.examDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`,
-      time: e.examDate,
+      time: e.createdAt,
       href: '/admin/exams.html'
     }));
 
