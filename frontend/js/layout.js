@@ -290,6 +290,10 @@ async function fetchNotifications() {
       contact:   { bg: '#dbeafe', color: '#2563eb', icon: 'fa-envelope' },
       notice:    { bg: '#fef9c3', color: '#ca8a04', icon: 'fa-bullhorn' },
       exam:      { bg: '#ede9fe', color: '#7c3aed', icon: 'fa-file-alt' },
+      reminder:  { bg: '#ffedd5', color: '#ea580c', icon: 'fa-clock' },
+      fee:       { bg: '#fee2e2', color: '#dc2626', icon: 'fa-rupee-sign' },
+      result:    { bg: '#e0e7ff', color: '#4338ca', icon: 'fa-graduation-cap' },
+      absent:    { bg: '#fce7f3', color: '#be185d', icon: 'fa-user-times' },
     };
     list.innerHTML = data.items.map(item => {
       const s = typeStyle[item.type] || typeStyle.notice;
