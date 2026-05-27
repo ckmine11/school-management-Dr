@@ -71,6 +71,23 @@ http://localhost/login.html
 Login: `admin@school.com` / `admin123`  
 **Change the password immediately after first login.**
 
+## 5. Configure School Branding
+
+Go to **Admin → School Settings** (`/admin/settings.html`) and set:
+
+| Field | Example |
+|---|---|
+| School Name | Bright Future Academy |
+| Tagline | Excellence in Education |
+| Logo | Upload school logo (PNG/JPG) |
+| Primary Color | Choose sidebar color |
+| Address, Phone, Email | Contact info (appears on PDFs) |
+| Academic Year | 2024-25 |
+| Currency Symbol | ₹ (or $ / £ for other countries) |
+| Fee Types | Add/remove fee categories |
+
+Click **Save Settings** — branding updates instantly across login page, sidebar, and all PDFs.
+
 ---
 
 ## All Pages
@@ -99,6 +116,7 @@ Login: `admin@school.com` / `admin123`
 | Exam Schedule | `/admin/exams.html` |
 | Gallery | `/admin/gallery.html` |
 | WhatsApp Setup | `/admin/whatsapp.html` |
+| School Settings | `/admin/settings.html` |
 
 ### Teacher
 | Page | URL |
@@ -194,6 +212,9 @@ curl http://localhost:5000/api/health
 
 ☐  First login: admin@school.com / admin123
    → Change admin password immediately after login
+
+☐  School branding configured:
+     Admin → School Settings → set name, logo, color, address, fee types
 
 ☐  WhatsApp connected:
      Admin → WhatsApp Setup → Connect WhatsApp → Scan QR

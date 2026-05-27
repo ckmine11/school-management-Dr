@@ -23,8 +23,9 @@
 12. [WhatsApp Integration](#12-whatsapp-integration)
 13. [PDF Generation](#13-pdf-generation)
 14. [Frontend Pages](#14-frontend-pages)
-15. [Security](#15-security)
-16. [Troubleshooting](#16-troubleshooting)
+15. [School Settings / White-Label](#15-school-settings--white-label)
+16. [Security](#16-security)
+17. [Troubleshooting](#17-troubleshooting)
 
 ---
 
@@ -151,7 +152,8 @@ school-management/
 │   │   ├── ExamSchedule.js     # Exam timetable
 │   │   ├── Timetable.js        # Weekly class schedule
 │   │   ├── Gallery.js          # Photo gallery
-│   │   └── MessageQueue.js     # WhatsApp message queue
+│   │   ├── MessageQueue.js     # WhatsApp message queue
+│   │   └── SchoolSettings.js   # White-label school config (singleton)
 │   │
 │   ├── routes/
 │   │   ├── auth.js             # Login, logout, change password
@@ -166,7 +168,8 @@ school-management/
 │   │   ├── dashboard.js        # Admin stats
 │   │   ├── whatsapp.js         # WA status, QR, queue
 │   │   ├── gallery.js          # Photo gallery
-│   │   └── notifications.js    # Push notifications
+│   │   ├── notifications.js    # Push notifications
+│   │   └── settings.js         # School branding & config
 │   │
 │   ├── services/
 │   │   ├── whatsappClient.js   # WhatsApp Web client wrapper
@@ -213,7 +216,8 @@ school-management/
     │   ├── timetable.html
     │   ├── exams.html
     │   ├── gallery.html
-    │   └── whatsapp.html
+    │   ├── whatsapp.html
+    │   └── settings.html       # School branding & config
     │
     ├── teacher/                # Teacher pages
     │   ├── dashboard.html
@@ -1007,6 +1011,23 @@ expiresAt       Date
 createdBy       ObjectId (ref: User)
 ```
 
+### SchoolSettings (Singleton)
+```
+schoolName      String  (default: 'My School')
+tagline         String  (default: 'Excellence in Education')
+logo            String  (URL to logo file, or null)
+primaryColor    String  (hex, default: '#1e3a5f')
+address         String
+phone           String
+email           String
+website         String
+academicYear    String  (e.g. '2024-25')
+currency        String  (e.g. 'INR')
+currencySymbol  String  (e.g. '₹')
+feeTypes        [String]
+```
+*Only one document ever exists. Created automatically on first API call if missing.*
+
 ---
 
 ## 12. WhatsApp Integration
@@ -1108,6 +1129,7 @@ Contents:
 | Exams | `/admin/exams.html` | Schedule exams, send reminders |
 | Gallery | `/admin/gallery.html` | Upload gallery photos |
 | WhatsApp | `/admin/whatsapp.html` | Connect WhatsApp, broadcast, queue |
+| Settings | `/admin/settings.html` | School branding, fee types, currency |
 
 ### Teacher Pages
 | Page | URL | Description |
@@ -1137,7 +1159,95 @@ Contents:
 
 ---
 
-## 15. Security
+## 15. School Settings / White-Label
+
+### Overview
+
+The `SchoolSettings` model is a **singleton document** (only one record in the database). It stores all branding and configuration for the school. Any change here is reflected immediately across the entire app — login page, sidebar, PDFs, and WhatsApp messages.
+
+### SchoolSettings Model
+
+```
+schoolName       String  (default: 'My School')
+tagline          String  (default: 'Excellence in Education')
+logo             String  (URL path to uploaded logo image, or null)
+primaryColor     String  (hex color, default: '#1e3a5f') ← sidebar color
+address          String
+phone            String
+email            String
+website          String
+academicYear     String  (e.g. '2024-25')
+currency         String  (e.g. 'INR')
+currencySymbol   String  (e.g. '₹')
+feeTypes         [String] (e.g. ['Tuition Fee', 'Transport Fee', ...])
+```
+
+### Settings API
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/api/settings` | Public | Get current settings (used by login page + layout) |
+| PUT | `/api/settings` | Admin | Update settings |
+| POST | `/api/settings/logo` | Admin | Upload school logo (multipart/form-data, field: `logo`) |
+| DELETE | `/api/settings/logo` | Admin | Remove school logo |
+
+**GET /api/settings** — Example response:
+```json
+{
+  "success": true,
+  "data": {
+    "schoolName": "Bright Future Academy",
+    "tagline": "Excellence in Education",
+    "logo": "/uploads/logos/logo_1716800000000.jpeg",
+    "primaryColor": "#1e3a5f",
+    "address": "123 Main Street, Mumbai",
+    "phone": "+91 98765 43210",
+    "email": "admin@brightfuture.com",
+    "website": "https://brightfuture.com",
+    "academicYear": "2024-25",
+    "currency": "INR",
+    "currencySymbol": "₹",
+    "feeTypes": ["Tuition Fee", "Transport Fee", "Library Fee", "Sports Fee", "Exam Fee"]
+  }
+}
+```
+
+**PUT /api/settings** — Request body (any subset of fields):
+```json
+{
+  "schoolName": "New School Name",
+  "primaryColor": "#14532d",
+  "feeTypes": ["Tuition Fee", "Hostel Fee", "Exam Fee"]
+}
+```
+
+### What Each Setting Controls
+
+| Field | Where it Appears |
+|---|---|
+| `schoolName` | Login page heading, sidebar, PDF header, WhatsApp footer |
+| `logo` | Login page (replaces initial letter), sidebar top |
+| `primaryColor` | Admin sidebar background color |
+| `tagline` | Login page subtitle, sidebar below school name |
+| `address`, `phone`, `email` | PDF fee receipts and ID cards |
+| `academicYear` | Student ID cards |
+| `currencySymbol` | Fee amounts displayed across all pages and PDFs |
+| `feeTypes` | Dropdown options in Fee Management and fee filter |
+
+### Multi-Client Deployment
+
+Each client deployment gets its own settings. After deploying for a new client:
+
+1. Login as Admin
+2. Go to **Admin → School Settings**
+3. Fill in school name, upload logo, choose color, set address and fee types
+4. Click **Save Settings**
+
+The app instantly looks and feels like that school's branded system — no code changes needed.
+
+---
+
+## 16. Security
 
 ### Authentication
 - JWT tokens stored in **httpOnly cookies** — not accessible to JavaScript, prevents XSS token theft
@@ -1168,7 +1278,7 @@ Contents:
 
 ---
 
-## 16. Troubleshooting
+## 17. Troubleshooting
 
 ### App not starting
 

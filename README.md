@@ -63,7 +63,7 @@ http://localhost/login.html
 - Auto WhatsApp notification to parent when student is absent
 
 ### Fee Management
-- Multiple fee types (tuition, transport, library, sports, exam)
+- Configurable fee types (set from School Settings)
 - Mark payments with method (cash, bank, online, cheque)
 - Auto WhatsApp receipt to parent after payment
 - Download fee receipt as PDF
@@ -95,6 +95,14 @@ http://localhost/login.html
 - MongoDB-backed message queue — messages survive server restarts
 - Broadcast to all parents, teachers, or students at once
 - Admin queue dashboard: pending / sent / failed counts + retry
+
+### School Settings (White-Label)
+- Set school name, logo, tagline, address, phone, email, website
+- Custom sidebar color (per-client branding)
+- Configurable fee types (add / remove from admin panel)
+- Custom currency symbol (₹, $, £, etc.)
+- Academic year setting
+- All branding applied across login page, sidebar, PDFs, and WhatsApp messages automatically
 
 ### Dashboard
 - Live stats: students, teachers, fee collection, attendance %
@@ -174,8 +182,8 @@ docker exec school-backend node seed.js
 ```
 school-management/
 ├── backend/
-│   ├── models/          # MongoDB schemas (11 models)
-│   ├── routes/          # REST API routes (13 route files)
+│   ├── models/          # MongoDB schemas (12 models)
+│   ├── routes/          # REST API routes (14 route files)
 │   ├── services/        # WhatsApp client, message queue, cron
 │   ├── utils/           # PDF generator, image processor, auth helpers
 │   ├── middleware/       # JWT auth + role authorization
@@ -211,6 +219,7 @@ Auth: JWT cookie (set on login) or `Authorization: Bearer <token>`
 | Exams | GET/POST /exams, PUT/DELETE /exams/:id, POST /exams/send-reminder |
 | WhatsApp | GET /whatsapp/status, POST /whatsapp/init, POST /whatsapp/send-bulk |
 | Dashboard | GET /dashboard/stats, GET /dashboard/class-stats |
+| Settings | GET /settings, PUT /settings, POST /settings/logo, DELETE /settings/logo |
 
 Full API docs → [DOCUMENTATION.md](DOCUMENTATION.md)
 
