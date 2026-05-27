@@ -80,13 +80,13 @@
       <!-- Contact Form -->
       <div class="bg-white rounded-2xl shadow-sm border p-6">
         <h2 class="text-xl font-bold text-gray-800 mb-5">Send a Message</h2>
-        <form onsubmit="sendMsg(event)" class="space-y-4">
-          <div><label class="label">Your Name *</label><input type="text" class="input" required></div>
-          <div><label class="label">Email *</label><input type="email" class="input" required></div>
-          <div><label class="label">Phone</label><input type="tel" class="input"></div>
+        <form id="contactForm" onsubmit="sendMsg(event)" class="space-y-4">
+          <div><label class="label">Your Name *</label><input id="c-name" type="text" class="input" required></div>
+          <div><label class="label">Email *</label><input id="c-email" type="email" class="input" required></div>
+          <div><label class="label">Phone</label><input id="c-phone" type="tel" class="input"></div>
           <div>
             <label class="label">Subject</label>
-            <select class="select">
+            <select id="c-subject" class="select">
               <option>General Inquiry</option>
               <option>Admission Query</option>
               <option>Fee Related</option>
@@ -94,9 +94,19 @@
               <option>Other</option>
             </select>
           </div>
-          <div><label class="label">Message *</label><textarea class="input h-28 resize-none" required placeholder="Type your message here..."></textarea></div>
-          <button type="submit" class="btn btn-primary w-full justify-center py-3"><i class="fas fa-paper-plane mr-2"></i>Send Message</button>
+          <div><label class="label">Message *</label><textarea id="c-message" class="input h-28 resize-none" required placeholder="Type your message here..."></textarea></div>
+          <button type="submit" id="sendBtn" class="btn btn-primary w-full justify-center py-3"><i class="fas fa-paper-plane mr-2"></i>Send Message</button>
         </form>
+
+        <!-- Success state -->
+        <div id="successBox" style="display:none;" class="text-center py-8">
+          <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-check-circle text-green-600 text-3xl"></i>
+          </div>
+          <h3 class="text-lg font-bold text-gray-800 mb-2">Message Sent!</h3>
+          <p class="text-gray-500 text-sm">Thank you for reaching out. We'll get back to you within 24 hours.</p>
+          <button onclick="resetForm()" class="mt-4 text-blue-600 text-sm hover:underline">Send another message</button>
+        </div>
       </div>
     </div>
   </div>
@@ -107,7 +117,58 @@
 
   <script src="js/auth.js?v=10"></script>
   <script>
-    function sendMsg(e) { e.preventDefault(); showToast('Message sent! We will respond within 24 hours.', 'success'); e.target.reset(); }
+    const API = window.location.protocol === 'file:' ? 'http://localhost:5000/api' : '/api';
+
+    async function sendMsg(e) {
+      e.preventDefault();
+      const btn = document.getElementById('sendBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
+      try {
+        const res = await fetch(`${API}/contact`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: document.getElementById('c-name').value.trim(),
+            email: document.getElementById('c-email').value.trim(),
+            phone: document.getElementById('c-phone').value.trim(),
+            subject: document.getElementById('c-subject').value,
+            message: document.getElementById('c-message').value.trim()
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Failed to send');
+        document.getElementById('contactForm').style.display = 'none';
+        document.getElementById('successBox').style.display = 'block';
+      } catch (err) {
+        showToast(err.message || 'Failed to send. Please try again.', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Send Message';
+      }
+    }
+
+    function resetForm() {
+      document.getElementById('contactForm').reset();
+      document.getElementById('contactForm').style.display = 'block';
+      document.getElementById('successBox').style.display = 'none';
+      document.getElementById('sendBtn').disabled = false;
+      document.getElementById('sendBtn').innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Send Message';
+    }
+
+    // Load school branding on contact page too
+    (async function() {
+      try {
+        const res = await fetch(`${API}/settings`);
+        const data = await res.json();
+        const s = data.data || {};
+        const nav = document.querySelector('nav a span') || document.querySelector('nav a');
+        if (s.schoolName) {
+          const nameEl = document.querySelector('nav .font-bold.text-gray-800');
+          if (nameEl) nameEl.textContent = s.schoolName;
+          document.title = `Contact | ${s.schoolName}`;
+        }
+      } catch {}
+    })();
   </script>
 </body>
 </html>

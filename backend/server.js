@@ -21,6 +21,7 @@ import notificationRoutes from './routes/notifications.js';
 import timetableRoutes from './routes/timetable.js';
 import examRoutes from './routes/examSchedule.js';
 import settingsRoutes from './routes/settings.js';
+import contactRoutes from './routes/contact.js';
 import { whatsappService } from './services/whatsappClient.js';
 import { messageQueueService } from './services/messageQueue.js';
 import { startReminderCron } from './services/reminderCron.js';
@@ -93,6 +94,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/timetable', timetableRoutes);
 app.use('/api/exams', examRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/contact', contactRoutes);
 
 app.get(['/', '/api', '/login', '/login.html'], (req, res) => {
   res.redirect(`${FRONTEND_URL}/login.html`);

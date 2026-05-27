@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Messages | School Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-gray-50">
+<div class="flex h-screen overflow-hidden">
+  <div id="sidebar"></div>
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <div id="topbar"></div>
+    <main class="flex-1 overflow-y-auto p-6">
+
+      <!-- Stats -->
+      <div class="grid grid-cols-3 gap-4 mb-5">
+        <div class="card text-center"><div class="text-2xl font-bold text-blue-600" id="stat-new">-</div><div class="text-xs text-gray-400 mt-1">New</div></div>
+        <div class="card text-center"><div class="text-2xl font-bold text-yellow-500" id="stat-read">-</div><div class="text-xs text-gray-400 mt-1">Read</div></div>
+        <div class="card text-center"><div class="text-2xl font-bold text-green-600" id="stat-replied">-</div><div class="text-xs text-gray-400 mt-1">Replied</div></div>
+      </div>
+
+      <!-- Filter -->
+      <div class="flex gap-2 mb-4">
+        <button onclick="setFilter('')" id="f-all" class="btn btn-primary text-xs">All</button>
+        <button onclick="setFilter('new')" id="f-new" class="btn btn-secondary text-xs"><i class="fas fa-circle text-blue-500 mr-1"></i>New</button>
+        <button onclick="setFilter('read')" id="f-read" class="btn btn-secondary text-xs">Read</button>
+        <button onclick="setFilter('replied')" id="f-replied" class="btn btn-secondary text-xs">Replied</button>
+      </div>
+
+      <!-- Messages list -->
+      <div id="msgList" class="space-y-3">
+        <div class="text-center py-10 text-gray-400"><i class="fas fa-spinner fa-spin text-2xl"></i></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div id="detailModal" class="hidden fixed inset-0 bg-black/50 modal-backdrop z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between px-6 py-4 border-b sticky top-0 bg-white">
+      <h2 class="font-bold text-lg text-gray-800">Message Detail</h2>
+      <button onclick="hideModal('detailModal')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"><i class="fas fa-times"></i></button>
+    </div>
+    <div id="detailContent" class="p-6"></div>
+  </div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/layout.js"></script>
+<script>
+  Auth.requireAuth(['admin']);
+  buildLayout('Contact Messages', 'admin');
+
+  let messages = [];
+  let currentFilter = '';
+
+  const statusColors = {
+    new: 'bg-blue-100 text-blue-700',
+    read: 'bg-yellow-100 text-yellow-700',
+    replied: 'bg-green-100 text-green-700'
+  };
+  const statusIcons = { new: 'fa-circle', read: 'fa-eye', replied: 'fa-reply' };
+
+  async function loadMessages() {
+    try {
+      const params = {};
+      if (currentFilter) params.status = currentFilter;
+      const res = await api.get('/contact', params);
+      messages = res.data || [];
+
+      // update stats
+      document.getElementById('stat-new').textContent = res.newCount ?? '-';
+
+      renderList();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  async function loadStats() {
+    try {
+      const [all, read, replied] = await Promise.all([
+        api.get('/contact', { status: 'read', limit: 1 }),
+        api.get('/contact', { status: 'read', limit: 1 }),
+        api.get('/contact', { status: 'replied', limit: 1 })
+      ]);
+      document.getElementById('stat-read').textContent = read.total ?? 0;
+      document.getElementById('stat-replied').textContent = replied.total ?? 0;
+    } catch {}
+  }
+
+  function renderList() {
+    const list = document.getElementById('msgList');
+    if (!messages.length) {
+      list.innerHTML = '<div class="text-center py-12 text-gray-400"><i class="fas fa-inbox text-4xl mb-3 block"></i>No messages found</div>';
+      return;
+    }
+    list.innerHTML = messages.map(m => `
+      <div class="card cursor-pointer hover:shadow-md transition" onclick="openDetail('${m._id}')">
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-600 flex-shrink-0">${m.name[0].toUpperCase()}</div>
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="font-semibold text-gray-800 text-sm">${m.name}</span>
+                <span class="badge text-xs ${statusColors[m.status]}"><i class="fas ${statusIcons[m.status]} mr-1"></i>${m.status}</span>
+              </div>
+              <div class="text-xs text-gray-400">${m.email}${m.phone ? ' · ' + m.phone : ''}</div>
+              <div class="text-sm font-medium text-gray-700 mt-0.5 truncate">${m.subject}</div>
+              <div class="text-xs text-gray-400 truncate">${m.message.slice(0, 80)}${m.message.length > 80 ? '...' : ''}</div>
+            </div>
+          </div>
+          <div class="text-xs text-gray-400 flex-shrink-0">${formatDate(m.createdAt)}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function openDetail(id) {
+    const m = messages.find(x => x._id === id);
+    if (!m) return;
+
+    // Mark as read automatically
+    if (m.status === 'new') {
+      api.put(`/contact/${id}`, { status: 'read' }).then(() => {
+        m.status = 'read';
+        renderList();
+        loadStats();
+        // Update new count
+        const el = document.getElementById('stat-new');
+        el.textContent = Math.max(0, parseInt(el.textContent || 0) - 1);
+      }).catch(() => {});
+    }
+
+    document.getElementById('detailContent').innerHTML = `
+      <div class="space-y-3">
+        <div class="grid grid-cols-2 gap-3 text-sm">
+          <div><span class="text-gray-400 block text-xs">Name</span><span class="font-semibold">${m.name}</span></div>
+          <div><span class="text-gray-400 block text-xs">Status</span><span class="badge text-xs ${statusColors[m.status]}">${m.status}</span></div>
+          <div><span class="text-gray-400 block text-xs">Email</span><a href="mailto:${m.email}" class="text-blue-600 hover:underline">${m.email}</a></div>
+          <div><span class="text-gray-400 block text-xs">Phone</span><span>${m.phone || '-'}</span></div>
+          <div class="col-span-2"><span class="text-gray-400 block text-xs">Subject</span><span class="font-semibold">${m.subject}</span></div>
+          <div class="col-span-2"><span class="text-gray-400 block text-xs">Received</span><span>${formatDateTime(m.createdAt)}</span></div>
+        </div>
+        <div>
+          <span class="text-gray-400 block text-xs mb-1">Message</span>
+          <div class="bg-gray-50 rounded-xl p-4 text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">${m.message}</div>
+        </div>
+        <div>
+          <span class="text-gray-400 block text-xs mb-1">Admin Note (internal)</span>
+          <textarea id="adminNote" class="input h-20 resize-none text-sm" placeholder="Add private note...">${m.adminNote || ''}</textarea>
+        </div>
+        <div class="flex gap-2 flex-wrap">
+          <a href="mailto:${m.email}?subject=Re: ${encodeURIComponent(m.subject)}" onclick="markReplied('${m._id}')" class="btn btn-success text-xs flex-1 justify-center">
+            <i class="fas fa-reply mr-1"></i> Reply via Email
+          </a>
+          <button onclick="saveNote('${m._id}')" class="btn btn-secondary text-xs">
+            <i class="fas fa-save mr-1"></i> Save Note
+          </button>
+          <button onclick="deleteMsg('${m._id}')" class="btn btn-danger text-xs">
+            <i class="fas fa-trash mr-1"></i>
+          </button>
+        </div>
+      </div>
+    `;
+    showModal('detailModal');
+  }
+
+  async function saveNote(id) {
+    const note = document.getElementById('adminNote')?.value || '';
+    await api.put(`/contact/${id}`, { adminNote: note });
+    const m = messages.find(x => x._id === id);
+    if (m) m.adminNote = note;
+    showToast('Note saved', 'success');
+  }
+
+  async function markReplied(id) {
+    await api.put(`/contact/${id}`, { status: 'replied' }).catch(() => {});
+    const m = messages.find(x => x._id === id);
+    if (m) { m.status = 'replied'; renderList(); loadStats(); }
+  }
+
+  async function deleteMsg(id) {
+    if (!confirm('Delete this message?')) return;
+    await api.delete(`/contact/${id}`);
+    messages = messages.filter(x => x._id !== id);
+    renderList();
+    hideModal('detailModal');
+    showToast('Deleted', 'success');
+    loadStats();
+  }
+
+  function setFilter(f) {
+    currentFilter = f;
+    ['all','new','read','replied'].forEach(k => {
+      const btn = document.getElementById(`f-${k}`);
+      btn.className = (f === k || (k === 'all' && f === '')) ? 'btn btn-primary text-xs' : 'btn btn-secondary text-xs';
+    });
+    loadMessages();
+  }
+
+  loadMessages();
+
+  // Load read/replied stats separately
+  Promise.all([
+    api.get('/contact', { status: 'read', limit: 1 }),
+    api.get('/contact', { status: 'replied', limit: 1 })
+  ]).then(([r, rp]) => {
+    document.getElementById('stat-read').textContent = r.total ?? 0;
+    document.getElementById('stat-replied').textContent = rp.total ?? 0;
+  }).catch(() => {});
+</script>
+</body>
+</html>
