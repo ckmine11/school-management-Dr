@@ -130,6 +130,26 @@ async function buildLayout(pageTitle, role) {
         ${user.mustChangePassword ? '<span class="badge badge-yellow hidden sm:inline-flex">Password update required</span>' : ''}
         <span class="badge badge-blue capitalize hidden sm:inline-flex">${user.role}</span>
         <span class="text-sm text-gray-600 font-medium hidden lg:block">${user.name}</span>
+        ${role === 'admin' ? `
+        <div class="relative" id="bellWrap">
+          <button onclick="toggleNotifDropdown()" id="bellBtn" class="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 transition">
+            <i class="fas fa-bell text-base"></i>
+            <span id="bellBadge" style="display:none;position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;background:#ef4444;color:white;font-size:10px;font-weight:700;border-radius:999px;display:none;align-items:center;justify-content:center;padding:0 4px;"></span>
+          </button>
+          <div id="notifDropdown" style="display:none;position:absolute;right:0;top:calc(100% + 8px);width:320px;z-index:1000;border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,0.15);border:1px solid #f1f5f9;overflow:hidden;background:white;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #f1f5f9;">
+              <span style="font-weight:700;font-size:14px;color:#1e293b;">Notifications</span>
+              <span id="notifCountLabel" style="font-size:12px;color:#94a3b8;"></span>
+            </div>
+            <div id="notifList" style="max-height:320px;overflow-y:auto;">
+              <div style="text-align:center;padding:32px 16px;color:#94a3b8;font-size:13px;"><i class="fas fa-spinner fa-spin"></i></div>
+            </div>
+            <div style="padding:10px 16px;border-top:1px solid #f1f5f9;background:#f8fafc;text-align:center;">
+              <a href="/admin/admissions.html" style="font-size:12px;color:#2563eb;text-decoration:none;margin-right:16px;">Admissions</a>
+              <a href="/admin/contacts.html" style="font-size:12px;color:#2563eb;text-decoration:none;">Contact Messages</a>
+            </div>
+          </div>
+        </div>` : ''}
         <a href="${changePasswordPath}" style="display:inline-flex;align-items:center;gap:5px;background:#0f766e;color:white;text-decoration:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;" class="hidden sm:inline-flex">
           <i class="fas fa-key"></i><span class="hidden md:inline">${securityLabel}</span>
         </a>
@@ -144,6 +164,25 @@ async function buildLayout(pageTitle, role) {
   if (sidebar) sidebar.innerHTML = sidebarHTML;
   if (header) header.innerHTML = headerHTML;
   document.title = `${pageTitle} | School Management`;
+
+  // Start notification bell polling for admin
+  if (role === 'admin') {
+    fetchNotifications();
+    if (!window._notifInterval) {
+      window._notifInterval = setInterval(fetchNotifications, 30000);
+    }
+    // Close dropdown on outside click (register once)
+    if (!window._notifClickListenerAdded) {
+      window._notifClickListenerAdded = true;
+      document.addEventListener('click', (e) => {
+        const wrap = document.getElementById('bellWrap');
+        const dd = document.getElementById('notifDropdown');
+        if (dd && wrap && !wrap.contains(e.target)) {
+          dd.style.display = 'none';
+        }
+      });
+    }
+  }
 
   // Inject overlay into body (only once)
   if (!document.getElementById('sidebarOverlay')) {
@@ -194,6 +233,65 @@ window.closeMobileSidebar = function () {
 };
 
 window.buildLayout = buildLayout;
+
+// Notification bell
+window.toggleNotifDropdown = function () {
+  const dd = document.getElementById('notifDropdown');
+  if (!dd) return;
+  const isOpen = dd.style.display !== 'none';
+  dd.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) fetchNotifications();
+};
+
+function _timeAgo(dateStr) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
+
+async function fetchNotifications() {
+  try {
+    const res = await fetch('/api/notifications/inbox', { credentials: 'include' });
+    if (!res.ok) return;
+    const data = await res.json();
+
+    const badge = document.getElementById('bellBadge');
+    const list = document.getElementById('notifList');
+    const countLabel = document.getElementById('notifCountLabel');
+    if (!badge || !list) return;
+
+    const unread = data.unread || 0;
+    if (unread > 0) {
+      badge.style.display = 'flex';
+      badge.textContent = unread > 99 ? '99+' : unread;
+    } else {
+      badge.style.display = 'none';
+    }
+    if (countLabel) countLabel.textContent = unread > 0 ? `${unread} new` : 'All clear';
+
+    if (!data.items || data.items.length === 0) {
+      list.innerHTML = '<div style="text-align:center;padding:32px 16px;color:#94a3b8;font-size:13px;"><i class="fas fa-check-circle" style="color:#22c55e;font-size:24px;display:block;margin-bottom:8px;"></i>No new notifications</div>';
+      return;
+    }
+
+    list.innerHTML = data.items.map(item => `
+      <a href="${item.href}" style="display:flex;align-items:flex-start;gap:12px;padding:12px 16px;text-decoration:none;border-bottom:1px solid #f8fafc;transition:background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
+        <div style="width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;background:${item.type === 'admission' ? '#dcfce7' : '#dbeafe'};color:${item.type === 'admission' ? '#16a34a' : '#2563eb'};">
+          <i class="fas ${item.type === 'admission' ? 'fa-user-plus' : 'fa-envelope'}" style="font-size:12px;"></i>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.title}</div>
+          <div style="font-size:12px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.subtitle}</div>
+          <div style="font-size:11px;color:#cbd5e1;margin-top:2px;">${_timeAgo(item.time)}</div>
+        </div>
+      </a>
+    `).join('');
+  } catch { /* silently fail */ }
+}
 
 // OneSignal push notification init
 (async function initOneSignal() {
