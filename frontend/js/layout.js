@@ -11,6 +11,7 @@ const NAV = {
     { icon: 'fab fa-whatsapp', label: 'WhatsApp', href: 'whatsapp.html' },
     { icon: 'fa-calendar-alt', label: 'Timetable', href: 'timetable.html' },
     { icon: 'fa-file-alt', label: 'Exam Schedule', href: 'exams.html' },
+    { icon: 'fa-user-plus', label: 'Admissions', href: 'admissions.html' },
     { icon: 'fa-envelope', label: 'Contact Messages', href: 'contacts.html' },
     { icon: 'fa-cog', label: 'School Settings', href: 'settings.html' },
   ],
