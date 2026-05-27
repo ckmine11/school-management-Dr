@@ -116,6 +116,8 @@ Click **Save Settings** — branding updates instantly across login page, sideba
 | Exam Schedule | `/admin/exams.html` |
 | Gallery | `/admin/gallery.html` |
 | WhatsApp Setup | `/admin/whatsapp.html` |
+| Admissions | `/admin/admissions.html` |
+| Contact Messages | `/admin/contacts.html` |
 | School Settings | `/admin/settings.html` |
 
 ### Teacher

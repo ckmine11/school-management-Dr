@@ -23,6 +23,9 @@
    - [WhatsApp Setup](#310-whatsapp-setup)
    - [Gallery — गैलरी](#311-gallery--गैलरी)
    - [School Settings — स्कूल की Settings](#312-school-settings--स्कूल-की-settings)
+   - [Admissions — दाखिला enquiry](#313-admissions--दाखिला-enquiry)
+   - [Contact Messages — Website से संदेश](#314-contact-messages--website-से-संदेश)
+   - [Notification Bell — सूचना की घंटी](#315-notification-bell--सूचना-की-घंटी-)
 4. [Teacher Guide](#4-teacher-guide)
 5. [Student Guide](#5-student-guide)
 6. [Parent Guide](#6-parent-guide)
@@ -48,6 +51,9 @@
 | समय-सारणी | क्लास का टाइमटेबल बनाना |
 | परीक्षा कार्यक्रम | परीक्षा की तारीख और समय |
 | WhatsApp | Parents को automatic message भेजना |
+| Admission Enquiry | Website से दाखिले की enquiry receive करना |
+| Contact Messages | Website से आए संदेश manage करना |
+| Notification Bell | सभी users को real-time सूचनाएं |
 | सूचनाएं | स्कूल की Notice सभी तक पहुंचाना |
 
 ### 4 प्रकार के Users
@@ -583,6 +589,70 @@ Default fee types:
 1. **Save Settings** button दबाएं
 2. "Settings saved successfully!" message आएगा
 3. Page reload होगी — नया branding तुरंत दिखेगा
+
+---
+
+### 3.13 Admissions — दाखिला enquiry
+
+**Menu में जाएं → Admissions**
+
+जब कोई parent website पर admission form भरता है, वह enquiry यहाँ आती है।
+
+#### Admin को क्या-क्या मिलता है?
+- **WhatsApp alert** — स्कूल के admin phone पर तुरंत message
+- **Email notification** — स्कूल की email पर (SMTP configure होने पर)
+- **Admin panel** में enquiry save हो जाती है
+
+#### Enquiry कैसे manage करें?
+1. **Admissions** page खोलें
+2. किसी enquiry पर click करें
+3. **Status** बदलें:
+   - `New` → अभी देखी नहीं
+   - `Contacted` → parent से बात हो गई
+   - `Admitted` → दाखिला हो गया
+   - `Rejected` → दाखिला नहीं हुआ
+4. **Call Parent** button से directly call करें
+5. **Admin Note** में internal note लिखें (parent को नहीं दिखता)
+6. **Save Note** दबाएं
+
+---
+
+### 3.14 Contact Messages — Website से संदेश
+
+**Menu में जाएं → Contact Messages**
+
+जब कोई website के contact form से message भेजता है, वह यहाँ आता है।
+
+#### Messages manage करना:
+1. Message पर click करें → automatically "Read" mark हो जाता है
+2. **Reply via Email** button से email reply करें → automatically "Replied" mark होता है
+3. Admin Note में private note रख सकते हैं
+
+---
+
+### 3.15 Notification Bell — सूचना की घंटी 🔔
+
+**सभी roles** (Admin, Teacher, Student, Parent) को topbar में ऊपर दाईं तरफ एक **bell icon** दिखेगा।
+
+#### Bell icon कैसे काम करता है?
+- **लाल badge** (नंबर के साथ) दिखे तो नई notifications हैं
+- Bell पर click करें → dropdown खुलेगा
+- हर 30 seconds में automatically refresh होता है
+
+#### किसे क्या दिखता है?
+
+| Role | Notifications |
+|---|---|
+| **Admin** | नई admission enquiries + नए contact messages + नई notices + upcoming exams |
+| **Teacher** | नई notices (teachers के लिए) + upcoming exams |
+| **Student** | नई notices (students के लिए) + upcoming exams |
+| **Parent** | नई notices (parents के लिए) + upcoming exams |
+
+#### Notification icons:
+- 🟡 पीला = Notice
+- 🟣 बैंगनी = Exam
+- 🟢 हरा = Admission enquiry (Admin only)
+- 🔵 नीला = Contact message (Admin only)
 
 ---
 

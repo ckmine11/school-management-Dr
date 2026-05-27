@@ -3,7 +3,7 @@
 A full-featured school management web application built with Node.js, MongoDB, and Nginx — fully containerized with Docker.
 
 **Roles:** Admin · Teacher · Student · Parent  
-**Notifications:** WhatsApp (auto + broadcast)  
+**Notifications:** WhatsApp (auto + broadcast) · In-app bell (all roles)  
 **PDFs:** Fee Receipts · Student ID Cards  
 **Deploy:** Docker Compose (works on any Linux VPS or Oracle Cloud Free Tier)
 
@@ -88,6 +88,25 @@ http://localhost/login.html
 - Post announcements with type and target audience
 - Optional WhatsApp broadcast to parents/teachers/students
 - Pin important notices, set expiry dates
+
+### Admission Enquiry
+- Public admission form on website (no login required)
+- Enquiries saved to database with status tracking (New → Contacted → Admitted / Rejected)
+- Admin gets instant WhatsApp alert + email notification on every new enquiry
+- Admin panel: view all enquiries, update status, add private notes, call/email parent
+
+### Contact Form
+- Public contact form on website
+- Messages saved to database with status tracking (New → Read → Replied)
+- Admin gets instant WhatsApp alert + email notification on every message
+- Admin panel: view messages, reply via email, mark as replied, add internal notes
+
+### In-App Notification Bell
+- Bell icon in the topbar for **all roles** (Admin, Teacher, Student, Parent)
+- Red badge shows unread count — auto-refreshes every 30 seconds
+- **All roles** see: new notices (last 7 days) + upcoming exams (next 7 days)
+- **Admin** additionally sees: new admission enquiries + new contact messages
+- Click any notification to go directly to the relevant page
 
 ### WhatsApp Integration
 - Connect via QR code scan (WhatsApp Web)

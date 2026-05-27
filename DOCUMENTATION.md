@@ -168,7 +168,9 @@ school-management/
 │   │   ├── dashboard.js        # Admin stats
 │   │   ├── whatsapp.js         # WA status, QR, queue
 │   │   ├── gallery.js          # Photo gallery
-│   │   ├── notifications.js    # Push notifications
+│   │   ├── notifications.js    # In-app bell inbox + push notifications
+│   │   ├── contact.js          # Contact form: save, WhatsApp alert, email
+│   │   ├── admissions.js       # Admission enquiry: save, WhatsApp alert, email
 │   │   └── settings.js         # School branding & config
 │   │
 │   ├── services/
@@ -178,6 +180,7 @@ school-management/
 │   │
 │   └── utils/
 │       ├── pdfGenerator.js     # Fee receipt + ID card PDFs
+│       ├── mailer.js           # SMTP email (admission + contact notifications)
 │       ├── authAccess.js       # Role-based access helpers
 │       ├── accountSync.js      # Student/parent user sync
 │       ├── imageProcessor.js   # Photo compression with sharp
@@ -217,6 +220,8 @@ school-management/
     │   ├── exams.html
     │   ├── gallery.html
     │   ├── whatsapp.html
+    │   ├── admissions.html     # Admission enquiries management
+    │   ├── contacts.html       # Contact form messages management
     │   └── settings.html       # School branding & config
     │
     ├── teacher/                # Teacher pages
@@ -1129,6 +1134,8 @@ Contents:
 | Exams | `/admin/exams.html` | Schedule exams, send reminders |
 | Gallery | `/admin/gallery.html` | Upload gallery photos |
 | WhatsApp | `/admin/whatsapp.html` | Connect WhatsApp, broadcast, queue |
+| Admissions | `/admin/admissions.html` | View/manage admission enquiries |
+| Contact Messages | `/admin/contacts.html` | View/reply to contact form messages |
 | Settings | `/admin/settings.html` | School branding, fee types, currency |
 
 ### Teacher Pages
@@ -1247,7 +1254,135 @@ The app instantly looks and feels like that school's branded system — no code 
 
 ---
 
-## 16. Security
+## 16. Admission Enquiry
+
+### Overview
+The public admission form (`/admission.html`) lets parents submit enquiries without logging in. Each submission is saved to the database and admin is notified instantly.
+
+### AdmissionEnquiry Model
+```
+studentName    String (required)
+dob            String
+applyingClass  String (required)
+parentName     String (required)
+phone          String (required)
+email          String
+currentSchool  String
+message        String
+status         Enum: new | contacted | admitted | rejected  (default: new)
+adminNote      String (internal note, not shown to parent)
+```
+
+### Admission API
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| POST | `/api/admissions` | Public | Submit new admission enquiry |
+| GET | `/api/admissions` | Admin | List all enquiries (filter by status, paginated) |
+| PUT | `/api/admissions/:id` | Admin | Update status or admin note |
+| DELETE | `/api/admissions/:id` | Admin | Delete an enquiry |
+
+### Notifications on New Enquiry
+1. **WhatsApp** — sent to school admin phone (from Settings) with full enquiry details
+2. **Email** — sent to school admin email (requires SMTP configured in `.env`)
+
+### Admin Panel (`/admin/admissions.html`)
+- 4 stat tiles: New / Contacted / Admitted / Rejected
+- Filter tabs by status
+- Each card shows student name, class, parent name, phone
+- Click → detail modal with inline status dropdown, Call/Email buttons, admin notes
+
+---
+
+## 17. Contact Form
+
+### Overview
+The public contact form (`/contact.html`) lets anyone send a message without logging in.
+
+### ContactMessage Model
+```
+name       String (required)
+email      String (required)
+phone      String
+subject    String
+message    String (required)
+status     Enum: new | read | replied  (default: new)
+adminNote  String
+```
+
+### Contact API
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| POST | `/api/contact` | Public | Submit contact message |
+| GET | `/api/contact` | Admin | List messages (filter by status) |
+| PUT | `/api/contact/:id` | Admin | Update status or admin note |
+| DELETE | `/api/contact/:id` | Admin | Delete message |
+
+### Notifications on New Message
+1. **WhatsApp** — sent to school admin phone
+2. **Email** — sent to school admin email (requires SMTP)
+
+### Admin Panel (`/admin/contacts.html`)
+- Stats: New / Read / Replied counts
+- Auto-marks message as "read" when opened
+- Reply link opens email client with subject pre-filled
+- "Mark Replied" updates status to replied
+
+---
+
+## 18. In-App Notification Bell
+
+### Overview
+A bell icon in the topbar is visible to **all roles** (Admin, Teacher, Student, Parent). It shows a red badge with unread count and a dropdown with recent items. Auto-refreshes every 30 seconds.
+
+### What Each Role Sees
+
+| Role | Notifications |
+|---|---|
+| Admin | New admission enquiries + new contact messages + new notices (7d) + upcoming exams (7d) |
+| Teacher | New notices for teachers/all (7d) + upcoming exams (7d) |
+| Student | New notices for students/all (7d) + upcoming exams (7d) |
+| Parent | New notices for parents/all (7d) + upcoming exams (7d) |
+
+### Notification Bell API
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/api/notifications/inbox` | All roles | Returns `unread` count + `items` array |
+
+### Response Format
+```json
+{
+  "success": true,
+  "unread": 5,
+  "items": [
+    {
+      "type": "admission",
+      "title": "New Admission: Rahul Sharma",
+      "subtitle": "Class 6",
+      "time": "2024-05-27T10:30:00Z",
+      "href": "/admin/admissions.html"
+    },
+    {
+      "type": "notice",
+      "title": "Annual Sports Day",
+      "subtitle": "Event Notice",
+      "time": "2024-05-26T09:00:00Z",
+      "href": "/admin/notices.html"
+    }
+  ]
+}
+```
+
+### Item Types and Colors
+| Type | Color | Icon |
+|---|---|---|
+| `notice` | Yellow | fa-bullhorn |
+| `exam` | Purple | fa-file-alt |
+| `admission` | Green | fa-user-plus |
+| `contact` | Blue | fa-envelope |
+
+---
+
+## 19. Security
 
 ### Authentication
 - JWT tokens stored in **httpOnly cookies** — not accessible to JavaScript, prevents XSS token theft
