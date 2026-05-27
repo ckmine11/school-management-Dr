@@ -130,11 +130,10 @@ async function buildLayout(pageTitle, role) {
         ${user.mustChangePassword ? '<span class="badge badge-yellow hidden sm:inline-flex">Password update required</span>' : ''}
         <span class="badge badge-blue capitalize hidden sm:inline-flex">${user.role}</span>
         <span class="text-sm text-gray-600 font-medium hidden lg:block">${user.name}</span>
-        ${role === 'admin' ? `
         <div class="relative" id="bellWrap">
           <button onclick="toggleNotifDropdown()" id="bellBtn" class="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 transition">
             <i class="fas fa-bell text-base"></i>
-            <span id="bellBadge" style="display:none;position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;background:#ef4444;color:white;font-size:10px;font-weight:700;border-radius:999px;display:none;align-items:center;justify-content:center;padding:0 4px;"></span>
+            <span id="bellBadge" style="display:none;position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;background:#ef4444;color:white;font-size:10px;font-weight:700;border-radius:999px;align-items:center;justify-content:center;padding:0 4px;"></span>
           </button>
           <div id="notifDropdown" style="display:none;position:absolute;right:0;top:calc(100% + 8px);width:320px;z-index:1000;border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,0.15);border:1px solid #f1f5f9;overflow:hidden;background:white;">
             <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #f1f5f9;">
@@ -145,11 +144,12 @@ async function buildLayout(pageTitle, role) {
               <div style="text-align:center;padding:32px 16px;color:#94a3b8;font-size:13px;"><i class="fas fa-spinner fa-spin"></i></div>
             </div>
             <div style="padding:10px 16px;border-top:1px solid #f1f5f9;background:#f8fafc;text-align:center;">
-              <a href="/admin/admissions.html" style="font-size:12px;color:#2563eb;text-decoration:none;margin-right:16px;">Admissions</a>
-              <a href="/admin/contacts.html" style="font-size:12px;color:#2563eb;text-decoration:none;">Contact Messages</a>
+              <a href="/admin/notices.html" style="font-size:12px;color:#2563eb;text-decoration:none;margin-right:12px;">Notices</a>
+              <a href="/admin/exams.html" style="font-size:12px;color:#2563eb;text-decoration:none;margin-right:12px;">Exams</a>
+              ${role === 'admin' ? '<a href="/admin/admissions.html" style="font-size:12px;color:#2563eb;text-decoration:none;margin-right:12px;">Admissions</a><a href="/admin/contacts.html" style="font-size:12px;color:#2563eb;text-decoration:none;">Messages</a>' : ''}
             </div>
           </div>
-        </div>` : ''}
+        </div>
         <a href="${changePasswordPath}" style="display:inline-flex;align-items:center;gap:5px;background:#0f766e;color:white;text-decoration:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;" class="hidden sm:inline-flex">
           <i class="fas fa-key"></i><span class="hidden md:inline">${securityLabel}</span>
         </a>
@@ -165,23 +165,21 @@ async function buildLayout(pageTitle, role) {
   if (header) header.innerHTML = headerHTML;
   document.title = `${pageTitle} | School Management`;
 
-  // Start notification bell polling for admin
-  if (role === 'admin') {
-    fetchNotifications();
-    if (!window._notifInterval) {
-      window._notifInterval = setInterval(fetchNotifications, 30000);
-    }
-    // Close dropdown on outside click (register once)
-    if (!window._notifClickListenerAdded) {
-      window._notifClickListenerAdded = true;
-      document.addEventListener('click', (e) => {
-        const wrap = document.getElementById('bellWrap');
-        const dd = document.getElementById('notifDropdown');
-        if (dd && wrap && !wrap.contains(e.target)) {
-          dd.style.display = 'none';
-        }
-      });
-    }
+  // Start notification bell polling for all roles
+  fetchNotifications();
+  if (!window._notifInterval) {
+    window._notifInterval = setInterval(fetchNotifications, 30000);
+  }
+  // Close dropdown on outside click (register once)
+  if (!window._notifClickListenerAdded) {
+    window._notifClickListenerAdded = true;
+    document.addEventListener('click', (e) => {
+      const wrap = document.getElementById('bellWrap');
+      const dd = document.getElementById('notifDropdown');
+      if (dd && wrap && !wrap.contains(e.target)) {
+        dd.style.display = 'none';
+      }
+    });
   }
 
   // Inject overlay into body (only once)
@@ -278,10 +276,18 @@ async function fetchNotifications() {
       return;
     }
 
-    list.innerHTML = data.items.map(item => `
+    const typeStyle = {
+      admission: { bg: '#dcfce7', color: '#16a34a', icon: 'fa-user-plus' },
+      contact:   { bg: '#dbeafe', color: '#2563eb', icon: 'fa-envelope' },
+      notice:    { bg: '#fef9c3', color: '#ca8a04', icon: 'fa-bullhorn' },
+      exam:      { bg: '#ede9fe', color: '#7c3aed', icon: 'fa-file-alt' },
+    };
+    list.innerHTML = data.items.map(item => {
+      const s = typeStyle[item.type] || typeStyle.notice;
+      return `
       <a href="${item.href}" style="display:flex;align-items:flex-start;gap:12px;padding:12px 16px;text-decoration:none;border-bottom:1px solid #f8fafc;transition:background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
-        <div style="width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;background:${item.type === 'admission' ? '#dcfce7' : '#dbeafe'};color:${item.type === 'admission' ? '#16a34a' : '#2563eb'};">
-          <i class="fas ${item.type === 'admission' ? 'fa-user-plus' : 'fa-envelope'}" style="font-size:12px;"></i>
+        <div style="width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;background:${s.bg};color:${s.color};">
+          <i class="fas ${s.icon}" style="font-size:12px;"></i>
         </div>
         <div style="flex:1;min-width:0;">
           <div style="font-size:13px;font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.title}</div>
@@ -289,7 +295,8 @@ async function fetchNotifications() {
           <div style="font-size:11px;color:#cbd5e1;margin-top:2px;">${_timeAgo(item.time)}</div>
         </div>
       </a>
-    `).join('');
+    `;
+    }).join('');
   } catch { /* silently fail */ }
 }
 
