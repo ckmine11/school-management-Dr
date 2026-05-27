@@ -63,7 +63,7 @@ router.get('/:id/receipt', protect, async (req, res) => {
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="receipt_${fee.receiptNo}.pdf"`);
-    generateFeeReceipt(fee, res);
+    await generateFeeReceipt(fee, res);
   } catch (err) {
     res.status(err.statusCode || 500).json({ success: false, message: err.message });
   }

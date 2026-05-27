@@ -167,6 +167,19 @@
   let fees = [];
   let feeStudents = [];
 
+  // Load fee types from school settings and populate dropdowns
+  async function loadFeeTypeDropdowns() {
+    try {
+      const s = await getSchoolSettings();
+      const types = (s && s.feeTypes && s.feeTypes.length) ? s.feeTypes : ['Tuition Fee', 'Transport Fee', 'Library Fee', 'Sports Fee', 'Exam Fee'];
+      const opts = types.map(t => `<option value="${t}">${t}</option>`).join('');
+      const filterOpts = `<option value="">All Types</option>` + opts;
+      document.getElementById('fTypeFilter').innerHTML = filterOpts;
+      document.getElementById('f-type').innerHTML = `<option value="">Select Type</option>` + opts;
+    } catch {}
+  }
+  loadFeeTypeDropdowns();
+
   function clearPageAction() {
     if (!window.location.search) return;
     window.history.replaceState({}, document.title, window.location.pathname);

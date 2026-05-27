@@ -11,6 +11,7 @@ const NAV = {
     { icon: 'fab fa-whatsapp', label: 'WhatsApp', href: 'whatsapp.html' },
     { icon: 'fa-calendar-alt', label: 'Timetable', href: 'timetable.html' },
     { icon: 'fa-file-alt', label: 'Exam Schedule', href: 'exams.html' },
+    { icon: 'fa-cog', label: 'School Settings', href: 'settings.html' },
   ],
   teacher: [
     { icon: 'fa-gauge', label: 'Dashboard', href: 'dashboard.html' },
@@ -37,22 +38,52 @@ const NAV = {
   ]
 };
 
-function buildLayout(pageTitle, role) {
+// Cache school settings for the page lifetime
+let _schoolSettings = null;
+async function loadSchoolSettings() {
+  if (_schoolSettings) return _schoolSettings;
+  try {
+    const res = await fetch('/api/settings');
+    const data = await res.json();
+    _schoolSettings = data.data || {};
+  } catch {
+    _schoolSettings = {};
+  }
+  return _schoolSettings;
+}
+
+// Expose so other scripts can use fee types etc.
+window.getSchoolSettings = loadSchoolSettings;
+
+async function buildLayout(pageTitle, role) {
   const user = Auth.getUser();
   if (!user) return;
+
+  const settings = await loadSchoolSettings();
+  const schoolName = settings.schoolName || 'My School';
+  const schoolTagline = settings.tagline || 'School Management System';
+  const schoolLogo = settings.logo || null;
+  const primaryColor = settings.primaryColor || '#1e3a5f';
+
   const navItems = NAV[role] || NAV.admin;
   const currentPage = window.location.pathname.split('/').pop();
   const changePasswordPath = '../change-password.html';
   const securityLabel = user.mustChangePassword ? 'Set Password' : 'Change Password';
-  const roleColors = { admin: '#1e3a5f', teacher: '#14532d', student: '#1e1b4b', parent: '#431407' };
-  const sidebarBg = roleColors[role] || '#1e3a5f';
+  // Role-specific tint: admin uses custom primaryColor, others keep their own brand color
+  const roleColors = { admin: primaryColor, teacher: '#14532d', student: '#1e1b4b', parent: '#431407' };
+  const sidebarBg = roleColors[role] || primaryColor;
   const dateStr = new Date().toLocaleDateString('en-IN', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+  // Logo or initial avatar
+  const logoHTML = schoolLogo
+    ? `<img src="${schoolLogo}" alt="logo" class="w-10 h-10 rounded-xl object-cover flex-shrink-0">`
+    : `<div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg font-bold flex-shrink-0">${schoolName[0].toUpperCase()}</div>`;
 
   const sidebarHTML = `
     <div class="flex flex-col h-full text-white" style="background:${sidebarBg}; width:240px; min-width:240px; height:100vh;">
       <div class="flex items-center gap-3 px-4 py-5 border-b border-white/10">
-        <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg font-bold flex-shrink-0">S</div>
-        <div class="flex-1 min-w-0"><div class="font-bold text-sm leading-tight">Bright Future</div><div class="text-xs text-white/60">School</div></div>
+        ${logoHTML}
+        <div class="flex-1 min-w-0"><div class="font-bold text-sm leading-tight">${schoolName}</div><div class="text-xs text-white/60">${schoolTagline}</div></div>
         <button id="sidebarCloseBtn" onclick="closeMobileSidebar()" style="display:none" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 flex-shrink-0">
           <i class="fas fa-times text-white/70"></i>
         </button>

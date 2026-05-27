@@ -144,8 +144,23 @@ function formatDateTime(d) {
 }
 
 function formatCurrency(n) {
-  return 'Rs. ' + (n || 0).toLocaleString('en-IN');
+  const sym = window._schoolCurrencySymbol || '₹';
+  return sym + ' ' + (n || 0).toLocaleString('en-IN');
 }
+
+// Load currency symbol from school settings (non-blocking)
+(async function loadCurrencySymbol() {
+  try {
+    if (typeof getSchoolSettings === 'function') {
+      const s = await getSchoolSettings();
+      if (s && s.currencySymbol) window._schoolCurrencySymbol = s.currencySymbol;
+    } else {
+      const res = await fetch('/api/settings');
+      const data = await res.json();
+      if (data.data && data.data.currencySymbol) window._schoolCurrencySymbol = data.data.currencySymbol;
+    }
+  } catch {}
+})();
 
 window.Auth = Auth;
 window.showToast = showToast;

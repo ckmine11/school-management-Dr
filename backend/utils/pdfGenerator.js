@@ -1,13 +1,34 @@
 import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
+import { getSettings } from '../models/SchoolSettings.js';
 
-const SCHOOL_NAME = process.env.SCHOOL_NAME || 'Bright Future School';
-const SCHOOL_EMAIL = process.env.SCHOOL_EMAIL || 'admin@school.com';
-const PRIMARY = '#1e3a5f';
 const SUCCESS = '#16a34a';
 const GRAY = '#6b7280';
 const LIGHT = '#f8fafc';
+
+async function getSchoolConfig() {
+  try {
+    const s = await getSettings();
+    return {
+      name: s.schoolName || process.env.SCHOOL_NAME || 'My School',
+      email: s.email || process.env.SCHOOL_EMAIL || '',
+      address: s.address || '',
+      phone: s.phone || '',
+      currencySymbol: s.currencySymbol || '₹',
+      primaryColor: s.primaryColor || '#1e3a5f',
+    };
+  } catch {
+    return {
+      name: process.env.SCHOOL_NAME || 'My School',
+      email: process.env.SCHOOL_EMAIL || '',
+      address: '',
+      phone: '',
+      currencySymbol: '₹',
+      primaryColor: '#1e3a5f',
+    };
+  }
+}
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -15,17 +36,20 @@ function fmtDate(d) {
   if (!d) return '-';
   return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 }
-function fmtRs(n) {
-  return `Rs. ${Number(n || 0).toLocaleString('en-IN')}`;
+function fmtMoney(n, sym) {
+  return `${sym || '₹'} ${Number(n || 0).toLocaleString('en-IN')}`;
 }
-function row(doc, label, value, y, lx = 60, vx = 220) {
-  doc.font('Helvetica').fontSize(10).fillColor(GRAY).text(label, lx, y);
+function row(doc, label, value, y, lx = 60, vx = 220, color = GRAY) {
+  doc.font('Helvetica').fontSize(10).fillColor(color).text(label, lx, y);
   doc.font('Helvetica-Bold').fontSize(10).fillColor('#111').text(String(value || '-'), vx, y);
 }
 
 // ─── Fee Receipt ─────────────────────────────────────────────────────────────
 
-export function generateFeeReceipt(fee, res) {
+export async function generateFeeReceipt(fee, res) {
+  const school = await getSchoolConfig();
+  const PRIMARY = school.primaryColor;
+
   const doc = new PDFDocument({ size: 'A5', margin: 0, bufferPages: true });
   doc.pipe(res);
 
@@ -36,10 +60,10 @@ export function generateFeeReceipt(fee, res) {
 
   // School initial circle
   doc.circle(48, 45, 24).fillAndStroke('white', PRIMARY);
-  doc.font('Helvetica-Bold').fontSize(20).fillColor(PRIMARY).text('S', 39, 33);
+  doc.font('Helvetica-Bold').fontSize(20).fillColor(PRIMARY).text(school.name[0].toUpperCase(), 39, 33);
 
   // School name + subtitle
-  doc.font('Helvetica-Bold').fontSize(16).fillColor('white').text(SCHOOL_NAME, 82, 22);
+  doc.font('Helvetica-Bold').fontSize(16).fillColor('white').text(school.name, 82, 22);
   doc.font('Helvetica').fontSize(10).fillColor('rgba(255,255,255,0.8)').text('Fee Receipt', 82, 44);
 
   // Status badge top-right
@@ -75,11 +99,11 @@ export function generateFeeReceipt(fee, res) {
   y += 8;
 
   const leftX = 40, midX = W / 2 + 10;
-  row(doc, 'Fee Type', fee.feeType?.charAt(0).toUpperCase() + fee.feeType?.slice(1) || '-', y, leftX + 10, leftX + 110);
+  row(doc, 'Fee Type', fee.feeType || '-', y, leftX + 10, leftX + 110);
   row(doc, 'Due Date', fmtDate(fee.dueDate), y, midX, midX + 90);
   y += 18;
-  row(doc, 'Total Amount', fmtRs(fee.amount), y, leftX + 10, leftX + 110);
-  row(doc, 'Paid Amount', fmtRs(fee.paidAmount), y, midX, midX + 90);
+  row(doc, 'Total Amount', fmtMoney(fee.amount, school.currencySymbol), y, leftX + 10, leftX + 110);
+  row(doc, 'Paid Amount', fmtMoney(fee.paidAmount, school.currencySymbol), y, midX, midX + 90);
   y += 18;
   row(doc, 'Payment Method', (fee.paymentMethod || 'cash').toUpperCase(), y, leftX + 10, leftX + 110);
   if (fee.month) row(doc, 'Month / Year', `${fee.month} ${fee.year || ''}`, y, midX, midX + 90);
@@ -88,7 +112,7 @@ export function generateFeeReceipt(fee, res) {
   y += 28;
   doc.rect(40, y, W - 80, 36).fill('#f0fdf4').stroke('#bbf7d0');
   doc.font('Helvetica-Bold').fontSize(13).fillColor(SUCCESS)
-    .text(`Total Paid: ${fmtRs(fee.paidAmount)}`, 40, y + 10, { width: W - 80, align: 'center' });
+    .text(`Total Paid: ${fmtMoney(fee.paidAmount, school.currencySymbol)}`, 40, y + 10, { width: W - 80, align: 'center' });
 
   // ── Footer ──
   y = doc.page.height - 52;
@@ -96,14 +120,17 @@ export function generateFeeReceipt(fee, res) {
   y += 8;
   doc.font('Helvetica').fontSize(8).fillColor(GRAY)
     .text('Thank you for your payment! This is a computer-generated receipt.', 40, y, { width: W - 80, align: 'center' });
-  doc.text(SCHOOL_EMAIL, 40, y + 12, { width: W - 80, align: 'center' });
+  if (school.email) doc.text(school.email, 40, y + 12, { width: W - 80, align: 'center' });
 
   doc.end();
 }
 
 // ─── Student ID Card ─────────────────────────────────────────────────────────
 
-export function generateIdCard(student, res) {
+export async function generateIdCard(student, res) {
+  const school = await getSchoolConfig();
+  const PRIMARY = school.primaryColor;
+
   // A6 landscape = 420 × 297pt  (close to credit-card-sized card)
   const doc = new PDFDocument({ size: [420, 270], margin: 0, bufferPages: true });
   doc.pipe(res);
@@ -121,10 +148,10 @@ export function generateIdCard(student, res) {
 
   // School initial
   doc.circle(46, 31, 18).fillAndStroke('white', PRIMARY);
-  doc.font('Helvetica-Bold').fontSize(16).fillColor(PRIMARY).text('S', 38, 21);
+  doc.font('Helvetica-Bold').fontSize(16).fillColor(PRIMARY).text(school.name[0].toUpperCase(), 38, 21);
 
   // School name
-  doc.font('Helvetica-Bold').fontSize(14).fillColor('white').text(SCHOOL_NAME, 74, 14);
+  doc.font('Helvetica-Bold').fontSize(14).fillColor('white').text(school.name, 74, 14);
   doc.font('Helvetica').fontSize(9).fillColor('rgba(255,255,255,0.75)').text('STUDENT IDENTITY CARD', 74, 34);
 
   // ── Photo box ──
@@ -162,11 +189,16 @@ export function generateIdCard(student, res) {
 
   // ── Right side: Academic year + parent ──
   const rX = 280, rY = 76;
-  const now = new Date();
-  const yr = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
-  const academicYear = `${yr} - ${yr + 1}`;
-  doc.font('Helvetica').fontSize(8).fillColor(GRAY).text('ACADEMIC YEAR', rX, rY);
-  doc.font('Helvetica-Bold').fontSize(10).fillColor('#1e293b').text(academicYear, rX, rY + 11);
+  try {
+    const settingsAY = (await getSettings()).academicYear;
+    doc.font('Helvetica').fontSize(8).fillColor(GRAY).text('ACADEMIC YEAR', rX, rY);
+    doc.font('Helvetica-Bold').fontSize(10).fillColor('#1e293b').text(settingsAY || '-', rX, rY + 11);
+  } catch {
+    const now = new Date();
+    const yr = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
+    doc.font('Helvetica').fontSize(8).fillColor(GRAY).text('ACADEMIC YEAR', rX, rY);
+    doc.font('Helvetica-Bold').fontSize(10).fillColor('#1e293b').text(`${yr} - ${yr + 1}`, rX, rY + 11);
+  }
 
   doc.font('Helvetica').fontSize(8).fillColor(GRAY).text('PARENT / GUARDIAN', rX, rY + 36);
   doc.font('Helvetica-Bold').fontSize(9).fillColor('#1e293b')
@@ -181,7 +213,7 @@ export function generateIdCard(student, res) {
   doc.font('Helvetica').fontSize(8).fillColor('rgba(255,255,255,0.7)')
     .text('If found, please return to:', 22, H - 36);
   doc.font('Helvetica-Bold').fontSize(8).fillColor('white')
-    .text(`${SCHOOL_NAME}  |  ${SCHOOL_EMAIL}`, 22, H - 24, { width: W - 44 });
+    .text(`${school.name}${school.email ? '  |  ' + school.email : ''}`, 22, H - 24, { width: W - 44 });
 
   doc.end();
 }

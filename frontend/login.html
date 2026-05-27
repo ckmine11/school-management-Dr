@@ -16,11 +16,11 @@
 </head>
 <body class="flex items-center justify-center p-4">
   <div class="w-full max-w-md fade-in">
-    <!-- Logo -->
-    <div class="text-center mb-8">
-      <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white/20 backdrop-blur text-white text-3xl font-bold mb-4">S</div>
-      <h1 class="text-3xl font-bold text-white">Bright Future School</h1>
-      <p class="text-blue-200 mt-1">School Management System</p>
+    <!-- Logo / School Branding -->
+    <div class="text-center mb-8" id="schoolBranding">
+      <div id="schoolLogoWrap" class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white/20 backdrop-blur text-white text-3xl font-bold mb-4">S</div>
+      <h1 class="text-3xl font-bold text-white" id="schoolNameEl">School Management</h1>
+      <p class="text-blue-200 mt-1" id="schoolTaglineEl">Loading...</p>
     </div>
 
     <div class="card-glass rounded-2xl shadow-2xl p-8">
@@ -235,6 +235,26 @@
 
     console.log('Login page version', LOGIN_VERSION, 'API base', AUTH_API_BASE);
     window.__pageInlineScriptExecuted = true;
+
+    // Load school branding dynamically
+    (async function loadBranding() {
+      try {
+        const res = await fetch(`${AUTH_API_BASE}/settings`);
+        const data = await res.json();
+        const s = data.data || {};
+        if (s.schoolName) document.getElementById('schoolNameEl').textContent = s.schoolName;
+        if (s.tagline) document.getElementById('schoolTaglineEl').textContent = s.tagline;
+        else document.getElementById('schoolTaglineEl').textContent = 'School Management System';
+        if (s.logo) {
+          document.getElementById('schoolLogoWrap').innerHTML = `<img src="${s.logo}" alt="logo" style="width:80px;height:80px;border-radius:16px;object-fit:cover;">`;
+        } else if (s.schoolName) {
+          document.getElementById('schoolLogoWrap').textContent = s.schoolName[0].toUpperCase();
+        }
+        if (s.primaryColor) {
+          document.body.style.background = `linear-gradient(135deg, ${s.primaryColor} 0%, #2563eb 50%, ${s.primaryColor}cc 100%)`;
+        }
+      } catch { document.getElementById('schoolTaglineEl').textContent = 'School Management System'; }
+    })();
 </script>
 <!-- Admin Recovery Modal -->
 <div id="recoveryModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:999;align-items:center;justify-content:center;padding:16px;">

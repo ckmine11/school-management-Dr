@@ -20,7 +20,7 @@ RUN npm install --omit=dev
 
 COPY . .
 
-RUN mkdir -p uploads/photos uploads/receipts uploads/gallery .wwebjs_auth
+RUN mkdir -p uploads/photos uploads/receipts uploads/gallery uploads/logos .wwebjs_auth
 
 EXPOSE 5000
 

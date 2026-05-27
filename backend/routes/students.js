@@ -297,7 +297,7 @@ router.get('/:id/idcard', protect, authorize('admin'), async (req, res) => {
     if (!student) throw createHttpError(404, 'Student not found');
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="idcard_${student.studentId}.pdf"`);
-    generateIdCard(student, res);
+    await generateIdCard(student, res);
   } catch (err) {
     res.status(err.statusCode || 500).json({ success: false, message: err.message });
   }
