@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 const feeSchema = new mongoose.Schema({
   receiptNo: { type: String, unique: true },
   studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Student', required: true },
-  feeType: { type: String, enum: ['tuition', 'transport', 'library', 'sports', 'exam', 'other'], required: true },
+  feeType: { type: String, required: true, trim: true },
   amount: { type: Number, required: true },
   dueDate: { type: Date, required: true },
   paidDate: { type: Date },
