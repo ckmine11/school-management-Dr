@@ -1160,9 +1160,11 @@ Contents:
 ### Parent Pages
 | Page | URL | Description |
 |---|---|---|
-| Dashboard | `/parent/dashboard.html` | Child's overview |
+| Dashboard | `/parent/dashboard.html` | Child's overview + recent notices |
+| Results | `/parent/results.html` | Child's exam results — subject-wise marks, grade, percentage, rank |
+| Fees | `/parent/fees.html` | Child's fee records — Total / Paid / Due summary, overdue highlighted |
 | Timetable | `/parent/timetable.html` | Child's class timetable |
-| Exams | `/parent/exams.html` | Child's upcoming exams |
+| Exams | `/parent/exams.html` | Child's upcoming exams with countdown |
 
 ---
 
