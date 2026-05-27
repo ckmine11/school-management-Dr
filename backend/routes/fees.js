@@ -182,9 +182,9 @@ router.post('/remind', protect, authorize('admin'), async (req, res) => {
     let sent = 0;
     for (const fee of unpaidFees) {
       if (fee.studentId?.parentPhone) {
-        await sendWhatsApp(
+        await messageQueueService.enqueue(
           fee.studentId.parentPhone,
-          `Dear Parent, this is a reminder that the *${fee.feeType}* fee of *Rs.${fee.amount}* for *${fee.studentId.name}* (${fee.studentId.class}) is due. Please pay at the earliest. Thank you.`
+          `📢 *Fee Reminder*\n\nDear Parent,\n\n*${fee.feeType}* fee of *Rs.${fee.amount}* for *${fee.studentId.name}* (${fee.studentId.class}-${fee.studentId.section}) is due.\n\nPlease pay at the earliest. Thank you.\n\n— ${process.env.SCHOOL_NAME || 'School'}`
         );
         sent += 1;
       }
