@@ -34,6 +34,8 @@ const NAV = {
   ],
   parent: [
     { icon: 'fa-gauge', label: 'Dashboard', href: 'dashboard.html' },
+    { icon: 'fa-chart-bar', label: "Child's Results", href: 'results.html' },
+    { icon: 'fa-indian-rupee-sign', label: "Child's Fees", href: 'fees.html' },
     { icon: 'fa-calendar-alt', label: 'Timetable', href: 'timetable.html' },
     { icon: 'fa-file-alt', label: 'Exam Schedule', href: 'exams.html' },
     { icon: 'fa-bullhorn', label: 'Notices', href: '../admin/notices.html' },

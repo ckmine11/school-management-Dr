@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Child's Fees | Parent</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-gray-50">
+<div class="flex h-screen overflow-hidden">
+  <div id="sidebar"></div>
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <div id="topbar"></div>
+    <main class="flex-1 overflow-y-auto p-6">
+
+      <!-- Summary Stats -->
+      <div class="grid grid-cols-3 gap-4 mb-5">
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center">
+          <div class="text-2xl font-bold text-gray-800" id="stat-total">--</div>
+          <div class="text-xs text-gray-500 mt-1">Total Fees</div>
+        </div>
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center">
+          <div class="text-2xl font-bold text-green-600" id="stat-paid">--</div>
+          <div class="text-xs text-gray-500 mt-1">Paid</div>
+        </div>
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center">
+          <div class="text-2xl font-bold text-red-500" id="stat-due">--</div>
+          <div class="text-xs text-gray-500 mt-1">Due</div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-5 py-4 border-b flex items-center justify-between">
+          <h2 class="font-bold text-gray-800">Fee Records</h2>
+          <select id="statusFilter" class="select w-32 text-sm" onchange="loadFees()">
+            <option value="">All</option>
+            <option value="unpaid">Unpaid</option>
+            <option value="paid">Paid</option>
+            <option value="partial">Partial</option>
+          </select>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50 border-b"><tr>
+              <th class="text-left px-4 py-3 text-gray-500">Receipt</th>
+              <th class="text-left px-4 py-3 text-gray-500">Type</th>
+              <th class="text-left px-4 py-3 text-gray-500">Amount</th>
+              <th class="text-left px-4 py-3 text-gray-500">Due Date</th>
+              <th class="text-left px-4 py-3 text-gray-500">Month</th>
+              <th class="text-left px-4 py-3 text-gray-500">Status</th>
+            </tr></thead>
+            <tbody id="feeTable" class="divide-y divide-gray-100">
+              <tr><td colspan="6" class="text-center py-8 text-gray-400"><i class="fas fa-spinner fa-spin text-xl"></i></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+<script src="../js/api.js?v=10"></script>
+<script src="../js/auth.js?v=10"></script>
+<script src="../js/layout.js?v=10"></script>
+<script>
+  const user = Auth.requireAuth(['parent']);
+  buildLayout("Child's Fees", 'parent');
+
+  let allFees = [];
+
+  async function loadFees() {
+    const status = document.getElementById('statusFilter').value;
+    const params = {};
+    if (status) params.status = status;
+    const tb = document.getElementById('feeTable');
+    try {
+      const res = await api.get('/fees', params);
+      allFees = res.data || [];
+      renderTable(allFees);
+      updateStats(allFees);
+    } catch (err) {
+      tb.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-gray-400">${err.message}</td></tr>`;
+    }
+  }
+
+  function renderTable(fees) {
+    const tb = document.getElementById('feeTable');
+    const statusBadge = { paid:'badge-green', unpaid:'badge-red', partial:'badge-yellow' };
+    if (!fees.length) {
+      tb.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">No fee records found</td></tr>';
+      return;
+    }
+    tb.innerHTML = fees.map(f => `
+      <tr class="hover:bg-gray-50 ${f.status==='unpaid'&&new Date(f.dueDate)<new Date()?'bg-red-50/30':''}">
+        <td class="px-4 py-3 text-xs font-mono text-gray-500">${f.receiptNo}</td>
+        <td class="px-4 py-3 text-sm capitalize">${f.feeType}</td>
+        <td class="px-4 py-3 font-semibold text-sm">${formatCurrency(f.amount)}</td>
+        <td class="px-4 py-3 text-sm ${f.status!=='paid'&&new Date(f.dueDate)<new Date()?'text-red-500 font-semibold':''}">${formatDate(f.dueDate)}</td>
+        <td class="px-4 py-3 text-sm text-gray-600">${f.month || '-'} ${f.year || ''}</td>
+        <td class="px-4 py-3"><span class="badge ${statusBadge[f.status]}">${f.status}</span></td>
+      </tr>`).join('');
+  }
+
+  function updateStats(fees) {
+    const total = fees.reduce((s, f) => s + f.amount, 0);
+    const paid = fees.reduce((s, f) => s + (f.paidAmount || 0), 0);
+    const due = fees.filter(f => f.status !== 'paid').reduce((s, f) => s + (f.amount - (f.paidAmount || 0)), 0);
+    document.getElementById('stat-total').textContent = formatCurrency(total);
+    document.getElementById('stat-paid').textContent = formatCurrency(paid);
+    document.getElementById('stat-due').textContent = formatCurrency(due);
+  }
+
+  loadFees();
+  window.__pageInlineScriptExecuted = true;
+</script>
+<script src="../js/inline-fallback.js?v=1"></script>
+</body>
+</html>
