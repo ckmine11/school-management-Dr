@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>स्कूल मैनेजमेंट सिस्टम — यूज़र गाइड</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700&family=Noto+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans Devanagari', 'Noto Sans', Arial, sans-serif;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #1e293b;
+    background: #fff;
+  }
+
+  /* ── Cover Page ── */
+  .cover {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+    color: white;
+    text-align: center;
+    padding: 40px;
+    page-break-after: always;
+  }
+  .cover-logo {
+    width: 90px; height: 90px;
+    background: white;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 40px; font-weight: 700;
+    color: #1e3a5f;
+    margin-bottom: 28px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  }
+  .cover h1 { font-size: 32px; font-weight: 700; margin-bottom: 12px; }
+  .cover h2 { font-size: 20px; font-weight: 400; opacity: 0.85; margin-bottom: 32px; }
+  .cover-badges { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-bottom: 40px; }
+  .cover-badge {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 6px 16px; border-radius: 20px;
+    font-size: 13px;
+  }
+  .cover-roles {
+    display: grid; grid-template-columns: repeat(2,1fr);
+    gap: 12px; width: 100%; max-width: 400px;
+  }
+  .cover-role {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 10px; padding: 14px;
+    text-align: left;
+  }
+  .cover-role .role-title { font-weight: 700; font-size: 14px; margin-bottom: 2px; }
+  .cover-role .role-desc { font-size: 11px; opacity: 0.8; }
+  .cover-footer {
+    position: absolute; bottom: 30px;
+    font-size: 12px; opacity: 0.6;
+  }
+
+  /* ── Page Layout ── */
+  .page { max-width: 800px; margin: 0 auto; padding: 40px 48px; }
+
+  /* ── TOC ── */
+  .toc-page { page-break-after: always; }
+  .toc-title {
+    font-size: 22px; font-weight: 700;
+    color: #1e3a5f; margin-bottom: 24px;
+    padding-bottom: 10px;
+    border-bottom: 3px solid #2563eb;
+  }
+  .toc-item {
+    display: flex; align-items: baseline;
+    padding: 6px 0;
+    border-bottom: 1px dotted #e2e8f0;
+  }
+  .toc-num { color: #2563eb; font-weight: 700; width: 30px; flex-shrink: 0; }
+  .toc-text { flex: 1; font-size: 13px; }
+  .toc-sub { padding-left: 30px; font-size: 12px; color: #64748b; }
+
+  /* ── Section Headers ── */
+  .section-header {
+    background: linear-gradient(135deg, #1e3a5f, #2563eb);
+    color: white;
+    padding: 16px 24px;
+    border-radius: 10px;
+    margin: 32px 0 20px 0;
+    page-break-after: avoid;
+  }
+  .section-header h2 { font-size: 18px; font-weight: 700; }
+  .section-header .section-num { font-size: 12px; opacity: 0.75; margin-bottom: 3px; }
+
+  h3 {
+    font-size: 15px; font-weight: 700;
+    color: #1e3a5f;
+    margin: 22px 0 10px 0;
+    padding-left: 10px;
+    border-left: 4px solid #2563eb;
+    page-break-after: avoid;
+  }
+  h4 {
+    font-size: 13px; font-weight: 700;
+    color: #334155;
+    margin: 16px 0 8px 0;
+    page-break-after: avoid;
+  }
+
+  p { margin-bottom: 10px; }
+
+  /* ── Steps ── */
+  .steps { counter-reset: step; margin: 12px 0; }
+  .step {
+    display: flex; gap: 12px;
+    margin-bottom: 10px;
+    align-items: flex-start;
+  }
+  .step-num {
+    width: 26px; height: 26px;
+    background: #2563eb; color: white;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+    flex-shrink: 0; margin-top: 1px;
+  }
+  .step-content { flex: 1; }
+
+  /* ── Tables ── */
+  table {
+    width: 100%; border-collapse: collapse;
+    margin: 12px 0 16px 0;
+    font-size: 12px;
+  }
+  th {
+    background: #1e3a5f; color: white;
+    padding: 9px 12px; text-align: left;
+    font-weight: 600;
+  }
+  td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; }
+  tr:nth-child(even) td { background: #f8fafc; }
+  tr:hover td { background: #eff6ff; }
+
+  /* ── Info Boxes ── */
+  .info-box {
+    border-left: 4px solid #2563eb;
+    background: #eff6ff;
+    padding: 12px 16px;
+    border-radius: 0 8px 8px 0;
+    margin: 12px 0;
+    font-size: 12px;
+  }
+  .success-box {
+    border-left: 4px solid #16a34a;
+    background: #f0fdf4;
+    padding: 12px 16px;
+    border-radius: 0 8px 8px 0;
+    margin: 12px 0;
+    font-size: 12px;
+  }
+  .warning-box {
+    border-left: 4px solid #d97706;
+    background: #fffbeb;
+    padding: 12px 16px;
+    border-radius: 0 8px 8px 0;
+    margin: 12px 0;
+    font-size: 12px;
+  }
+  .error-box {
+    border-left: 4px solid #dc2626;
+    background: #fef2f2;
+    padding: 12px 16px;
+    border-radius: 0 8px 8px 0;
+    margin: 12px 0;
+    font-size: 12px;
+  }
+
+  /* ── Code / Command blocks ── */
+  .code-block {
+    background: #1e293b; color: #e2e8f0;
+    padding: 14px 18px; border-radius: 8px;
+    font-family: 'Courier New', monospace;
+    font-size: 11px; line-height: 1.6;
+    margin: 10px 0;
+    white-space: pre-wrap;
+  }
+  code {
+    background: #e2e8f0; color: #1e3a5f;
+    padding: 2px 6px; border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+  }
+
+  /* ── Role Sections (colored tops) ── */
+  .role-admin .section-header { background: linear-gradient(135deg, #1e3a5f, #2563eb); }
+  .role-teacher .section-header { background: linear-gradient(135deg, #065f46, #059669); }
+  .role-student .section-header { background: linear-gradient(135deg, #4338ca, #7c3aed); }
+  .role-parent .section-header { background: linear-gradient(135deg, #92400e, #d97706); }
+
+  /* ── WhatsApp message preview ── */
+  .wa-message {
+    background: #e7ffdb;
+    border-radius: 12px 12px 12px 0;
+    padding: 12px 16px;
+    margin: 10px 0 10px 20px;
+    max-width: 360px;
+    font-size: 12px;
+    border: 1px solid #c3f1a0;
+    position: relative;
+  }
+  .wa-message::before {
+    content: '📱 WhatsApp';
+    display: block;
+    font-size: 10px;
+    color: #16a34a;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  /* ── Checklist ── */
+  .checklist { list-style: none; margin: 10px 0; }
+  .checklist li {
+    padding: 6px 0 6px 28px;
+    position: relative;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 12px;
+  }
+  .checklist li::before {
+    content: '☐';
+    position: absolute; left: 0;
+    color: #2563eb; font-size: 14px;
+  }
+
+  /* ── Quick Ref Card ── */
+  .quick-ref {
+    background: #1e3a5f;
+    color: white;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin: 16px 0;
+  }
+  .quick-ref h3 { color: white; border-left-color: #60a5fa; }
+  .quick-ref .qr-item {
+    display: flex; gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    font-size: 12px;
+  }
+  .quick-ref .qr-check { color: #4ade80; font-size: 14px; }
+
+  /* ── Page break ── */
+  .page-break { page-break-before: always; }
+  .no-break { page-break-inside: avoid; }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    padding: 20px;
+    color: #94a3b8;
+    font-size: 11px;
+    border-top: 1px solid #e2e8f0;
+    margin-top: 40px;
+  }
+
+  /* ── Print styles ── */
+  @media print {
+    body { font-size: 12px; }
+    .cover { height: 100vh; }
+    @page { margin: 15mm 12mm; size: A4; }
+    .no-print { display: none; }
+    a { text-decoration: none; color: inherit; }
+  }
+
+  /* ── Screen: print button ── */
+  .print-btn {
+    position: fixed; top: 20px; right: 20px;
+    background: #2563eb; color: white;
+    border: none; padding: 10px 20px;
+    border-radius: 8px; cursor: pointer;
+    font-size: 13px; font-weight: 600;
+    box-shadow: 0 4px 12px rgba(37,99,235,0.3);
+    z-index: 999;
+  }
+  .print-btn:hover { background: #1d4ed8; }
+  @media print { .print-btn { display: none; } }
+
+  ul { padding-left: 20px; margin: 8px 0; }
+  li { margin-bottom: 4px; }
+  strong { font-weight: 700; color: #1e3a5f; }
+  hr { border: none; border-top: 1px solid #e2e8f0; margin: 20px 0; }
+</style>
+</head>
+<body>
+
+<button class="print-btn no-print" onclick="window.print()">🖨️ PDF Save करें</button>
+
+<!-- ═══════════════ COVER PAGE ═══════════════ -->
+<div class="cover">
+  <div class="cover-logo">S</div>
+  <h1>स्कूल मैनेजमेंट सिस्टम</h1>
+  <h2>यूज़र गाइड — हिंदी</h2>
+  <div class="cover-badges">
+    <span class="cover-badge">Version 1.0</span>
+    <span class="cover-badge">May 2026</span>
+    <span class="cover-badge">सरल भाषा में</span>
+  </div>
+  <div class="cover-roles">
+    <div class="cover-role">
+      <div class="role-title">👨‍💼 Admin</div>
+      <div class="role-desc">स्कूल प्रशासक — सब कुछ manage करें</div>
+    </div>
+    <div class="cover-role">
+      <div class="role-title">👨‍🏫 Teacher</div>
+      <div class="role-desc">शिक्षक — attendance और results</div>
+    </div>
+    <div class="cover-role">
+      <div class="role-title">🎓 Student</div>
+      <div class="role-desc">छात्र — अपनी जानकारी देखें</div>
+    </div>
+    <div class="cover-role">
+      <div class="role-title">👨‍👩‍👧 Parent</div>
+      <div class="role-desc">अभिभावक — बच्चे की progress</div>
+    </div>
+  </div>
+  <div class="cover-footer">Bright Future School Management System</div>
+</div>
+
+<!-- ═══════════════ TABLE OF CONTENTS ═══════════════ -->
+<div class="page toc-page">
+  <div class="toc-title">📋 विषय सूची</div>
+
+  <div class="toc-item"><span class="toc-num">1</span><span class="toc-text">सिस्टम का परिचय — Features और User Roles</span></div>
+  <div class="toc-item"><span class="toc-num">2</span><span class="toc-text">Login कैसे करें</span></div>
+  <div class="toc-item"><span class="toc-num">3</span><span class="toc-text">Admin Guide</span></div>
+  <div class="toc-sub">3.1 Dashboard</div>
+  <div class="toc-sub">3.2 Students — छात्र प्रबंधन</div>
+  <div class="toc-sub">3.3 Teachers — शिक्षक प्रबंधन</div>
+  <div class="toc-sub">3.4 Attendance — उपस्थिति</div>
+  <div class="toc-sub">3.5 Fees — फीस प्रबंधन</div>
+  <div class="toc-sub">3.6 Results — परिणाम</div>
+  <div class="toc-sub">3.7 Notices — सूचनाएं</div>
+  <div class="toc-sub">3.8 Timetable — समय-सारणी</div>
+  <div class="toc-sub">3.9 Exam Schedule — परीक्षा कार्यक्रम</div>
+  <div class="toc-sub">3.10 WhatsApp Setup</div>
+  <div class="toc-sub">3.11 Gallery — गैलरी</div>
+  <div class="toc-item"><span class="toc-num">4</span><span class="toc-text">Teacher Guide</span></div>
+  <div class="toc-item"><span class="toc-num">5</span><span class="toc-text">Student Guide</span></div>
+  <div class="toc-item"><span class="toc-num">6</span><span class="toc-text">Parent Guide</span></div>
+  <div class="toc-item"><span class="toc-num">7</span><span class="toc-text">Password बदलना</span></div>
+  <div class="toc-item"><span class="toc-num">8</span><span class="toc-text">WhatsApp Notifications — सभी messages की जानकारी</span></div>
+  <div class="toc-item"><span class="toc-num">9</span><span class="toc-text">सामान्य समस्याएं और समाधान</span></div>
+  <div class="toc-item"><span class="toc-num">10</span><span class="toc-text">Quick Reference Card</span></div>
+</div>
+
+<!-- ═══════════════ SECTION 1 ═══════════════ -->
+<div class="page">
+  <div class="section-header">
+    <div class="section-num">अध्याय 1</div>
+    <h2>सिस्टम का परिचय</h2>
+  </div>
+
+  <p>यह एक <strong>स्कूल मैनेजमेंट सिस्टम</strong> है जिससे स्कूल के सभी काम आसानी से ऑनलाइन किए जा सकते हैं — कहीं से भी, किसी भी device से।</p>
+
+  <h3>इस सिस्टम में क्या-क्या होता है?</h3>
+  <table>
+    <tr><th>काम</th><th>विवरण</th></tr>
+    <tr><td>छात्र प्रबंधन</td><td>नए छात्र जोड़ना, जानकारी देखना, ID Card बनाना</td></tr>
+    <tr><td>शिक्षक प्रबंधन</td><td>शिक्षकों का रिकॉर्ड रखना</td></tr>
+    <tr><td>उपस्थिति</td><td>रोज़ की हाजिरी लगाना</td></tr>
+    <tr><td>फीस</td><td>फीस जमा करना, PDF रसीद देना</td></tr>
+    <tr><td>परिणाम</td><td>परीक्षा के नंबर डालना, grade automatic</td></tr>
+    <tr><td>समय-सारणी</td><td>क्लास का टाइमटेबल बनाना</td></tr>
+    <tr><td>परीक्षा कार्यक्रम</td><td>परीक्षा की तारीख, समय, reminder</td></tr>
+    <tr><td>WhatsApp</td><td>Parents को automatic messages भेजना</td></tr>
+    <tr><td>सूचनाएं</td><td>स्कूल की Notice सभी तक पहुंचाना</td></tr>
+  </table>
+
+  <h3>4 प्रकार के Users</h3>
+  <table>
+    <tr><th>Role</th><th>कौन</th><th>क्या कर सकते हैं</th></tr>
+    <tr><td><strong>Admin</strong></td><td>स्कूल प्रशासक</td><td>सब कुछ देख और बदल सकते हैं</td></tr>
+    <tr><td><strong>Teacher</strong></td><td>शिक्षक</td><td>अपनी class की attendance और results</td></tr>
+    <tr><td><strong>Student</strong></td><td>छात्र</td><td>सिर्फ अपनी जानकारी देख सकते हैं</td></tr>
+    <tr><td><strong>Parent</strong></td><td>अभिभावक</td><td>अपने बच्चे की जानकारी देख सकते हैं</td></tr>
+  </table>
+</div>
+
+<!-- ═══════════════ SECTION 2 ═══════════════ -->
+<div class="page page-break">
+  <div class="section-header">
+    <div class="section-num">अध्याय 2</div>
+    <h2>Login कैसे करें</h2>
+  </div>
+
+  <h3>Step 1 — Browser में खोलें</h3>
+  <p>अपने phone या computer के browser (Chrome, Firefox) में यह address खोलें:</p>
+  <div class="code-block">http://आपके-सर्वर-का-IP/login.html
+उदाहरण: http://152.67.10.25/login.html</div>
+
+  <h3>Step 2 — Email और Password डालें</h3>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-content">Email box में अपना email address डालें</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-content">Password box में अपना password डालें</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-content"><strong>Sign In</strong> button दबाएं</div></div>
+  </div>
+
+  <h3>Step 3 — Dashboard खुलेगा</h3>
+  <p>Login होने के बाद आप अपने role के अनुसार Dashboard पर पहुंच जाएंगे।</p>
+
+  <div class="success-box">
+    ✅ <strong>पहली बार Login के बाद:</strong> अगर <em>"Please change your password"</em> दिखे तो नया password (कम से कम 8 अक्षर) डालें और Save करें।
+  </div>
+
+  <h3>Default Admin Login (पहली बार)</h3>
+  <div class="code-block">Email:    admin@school.com
+Password: admin123</div>
+  <div class="warning-box">⚠️ पहले Login के बाद तुरंत password बदलें।</div>
+</div>
+
+<!-- ═══════════════ SECTION 3 — ADMIN ═══════════════ -->
+<div class="page page-break role-admin">
+  <div class="section-header">
+    <div class="section-num">अध्याय 3</div>
+    <h2>👨‍💼 Admin Guide</h2>
+  </div>
+  <p>Admin को सबसे ज़्यादा access मिलता है। Admin सब कुछ देख और बदल सकता है।</p>
+
+  <h3>3.1 Dashboard</h3>
+  <p>Login करते ही Dashboard पर यह stats दिखती हैं:</p>
+  <table>
+    <tr><th>जानकारी</th><th>मतलब</th></tr>
+    <tr><td>Total Students</td><td>स्कूल में कुल active छात्र</td></tr>
+    <tr><td>Total Teachers</td><td>कुल active शिक्षक</td></tr>
+    <tr><td>Fee Collected</td><td>इस साल कुल जमा फीस</td></tr>
+    <tr><td>Today Present</td><td>आज उपस्थित छात्र</td></tr>
+    <tr><td>Today Absent</td><td>आज अनुपस्थित छात्र</td></tr>
+    <tr><td>Attendance %</td><td>आज की उपस्थिति का प्रतिशत</td></tr>
+  </table>
+
+  <h3>3.2 Students — छात्र प्रबंधन</h3>
+  <p><strong>Menu → Students</strong></p>
+
+  <h4>नया छात्र जोड़ना</h4>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-content"><strong>Add Student</strong> button दबाएं</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-content">यह जानकारी भरें:</div></div>
+  </div>
+  <table>
+    <tr><th>Field</th><th>क्या भरें</th></tr>
+    <tr><td>Full Name</td><td>छात्र का पूरा नाम</td></tr>
+    <tr><td>Class / Section</td><td>कक्षा और Section (जैसे 10, A)</td></tr>
+    <tr><td>Roll Number</td><td>Roll No.</td></tr>
+    <tr><td>Parent Name</td><td>माता/पिता का नाम</td></tr>
+    <tr><td><strong>⭐ Parent Phone</strong></td><td><strong>WhatsApp नंबर — यह ज़रूरी है!</strong></td></tr>
+    <tr><td>Parent Email</td><td>माता/पिता की email</td></tr>
+    <tr><td>Photo</td><td>छात्र की फोटो (JPG/PNG)</td></tr>
+  </table>
+  <div class="success-box">
+    ✅ <strong>छात्र Save करने के बाद automatically:</strong><br>
+    • छात्र का login account बन जाएगा<br>
+    • Parent का login account बन जाएगा<br>
+    • दोनों के credentials एक बार दिखेंगे — <strong>नोट कर लें</strong>
+  </div>
+
+  <h4>Student ID Card Download करना</h4>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-content">Students list में छात्र के सामने <strong>ID Card</strong> button दबाएं</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-content">PDF automatic download होगी — print करके दें</div></div>
+  </div>
+</div>
+
+<div class="page page-break role-admin">
+  <h3>3.3 Teachers — शिक्षक प्रबंधन</h3>
+  <p><strong>Menu → Teachers</strong></p>
+  <table>
+    <tr><th>Field</th><th>क्या भरें</th></tr>
+    <tr><td>Full Name</td><td>शिक्षक का नाम</td></tr>
+    <tr><td>Email</td><td>Login के लिए email</td></tr>
+    <tr><td>Phone</td><td>WhatsApp नंबर</td></tr>
+    <tr><td>Subjects</td><td>पढ़ाए जाने वाले विषय</td></tr>
+    <tr><td>Assigned Classes</td><td>कौन सी class/section पढ़ाते हैं</td></tr>
+  </table>
+
+  <h3>3.4 Attendance — उपस्थिति</h3>
+  <p><strong>Menu → Attendance</strong></p>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-content"><strong>Class</strong> और <strong>Section</strong> चुनें</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-content"><strong>Date</strong> चुनें</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-content">हर छात्र के सामने status चुनें: <strong>Present / Absent / Late / Holiday</strong></div></div>
+    <div class="step"><div class="step-num">4</div><div class="step-content"><strong>Save Attendance</strong> button दबाएं</div></div>
+  </div>
+  <div class="info-box">📱 जिस छात्र को <strong>Absent</strong> लगाया जाएगा, उसके parent को automatically WhatsApp message जाएगा।</div>
+
+  <h3>3.5 Fees — फीस प्रबंधन</h3>
+  <p><strong>Menu → Fees</strong></p>
+
+  <h4>नई फीस एंट्री बनाना</h4>
+  <table>
+    <tr><th>Field</th><th>क्या भरें</th></tr>
+    <tr><td>Student</td><td>छात्र का नाम खोजें और चुनें</td></tr>
+    <tr><td>Fee Type</td><td>Tuition / Transport / Library / Sports / Exam / Other</td></tr>
+    <tr><td>Amount</td><td>फीस की रकम (₹ में)</td></tr>
+    <tr><td>Due Date</td><td>जमा करने की अंतिम तारीख</td></tr>
+    <tr><td>Month / Year</td><td>किस महीने और साल की फीस</td></tr>
+  </table>
+
+  <h4>Payment दर्ज करना</h4>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-content">Fee entry के सामने <strong>Pay</strong> button दबाएं</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-content">Paid Amount और Payment Method (Cash/Bank/Online/Cheque) भरें</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-content"><strong>Confirm Payment</strong> दबाएं</div></div>
+  </div>
+  <div class="success-box">✅ Payment के बाद Parent को WhatsApp receipt message automatically जाएगा।</div>
+
+  <h4>Fee Receipt PDF Download</h4>
+  <p>Fee entry के सामने <strong>Receipt 📄</strong> button दबाएं → PDF download → Print करें।</p>
+</div>
+
+<div class="page page-break role-admin">
+  <h3>3.6 Results — परिणाम</h3>
+  <p><strong>Menu → Results → Add Result</strong></p>
+  <table>
+    <tr><th>Field</th><th>क्या भरें</th></tr>
+    <tr><td>Exam Type</td><td>Unit Test / Midterm / Final / Quarterly</td></tr>
+    <tr><td>Academic Year</td><td>जैसे 2025-2026</td></tr>
+    <tr><td>Subjects</td><td>हर विषय के Max Marks और Obtained Marks</td></tr>
+  </table>
+  <div class="info-box">🧮 <strong>Grade automatic calculate होगी:</strong> A+ (≥90%) · A (≥80%) · B+ (≥70%) · B (≥60%) · C (≥50%) · D (≥33%) · F (&lt;33%)</div>
+
+  <h3>3.7 Notices — सूचनाएं</h3>
+  <p><strong>Menu → Notices → Add Notice</strong></p>
+  <table>
+    <tr><th>Field</th><th>क्या भरें</th></tr>
+    <tr><td>Title / Content</td><td>सूचना का शीर्षक और पूरा content</td></tr>
+    <tr><td>Type</td><td>General / Exam / Holiday / Event / Fee / Result</td></tr>
+    <tr><td>Target Audience</td><td>All / Teachers / Students / Parents</td></tr>
+    <tr><td>Send WhatsApp ✅</td><td>Check करें तो WhatsApp broadcast भी जाएगा</td></tr>
+  </table>
+
+  <h3>3.8 Timetable — समय-सारणी</h3>
+  <p><strong>Menu → Timetable → Class और Section चुनें → Edit</strong></p>
+  <table>
+    <tr><th>Field</th><th>क्या भरें</th></tr>
+    <tr><td>Period No</td><td>1, 2, 3...</td></tr>
+    <tr><td>Start / End Time</td><td>जैसे 08:00 — 08:45</td></tr>
+    <tr><td>Subject</td><td>विषय का नाम</td></tr>
+    <tr><td>Teacher</td><td>Dropdown से शिक्षक चुनें</td></tr>
+  </table>
+  <p>हर दिन के लिए अलग-अलग <strong>Save Day</strong> button दबाएं।</p>
+
+  <h3>3.9 Exam Schedule — परीक्षा कार्यक्रम</h3>
+  <p><strong>Menu → Exam Schedule → Add Exam</strong></p>
+  <table>
+    <tr><th>Field</th><th>क्या भरें</th></tr>
+    <tr><td>Exam Type</td><td>Unit Test / Midterm / Final / Quarterly / Other</td></tr>
+    <tr><td>Class / Section</td><td>Class number, Section या "All"</td></tr>
+    <tr><td>Subject / Date</td><td>विषय और परीक्षा की तारीख</td></tr>
+    <tr><td>Start Time / Duration</td><td>समय और कितने मिनट</td></tr>
+    <tr><td>Max Marks / Room</td><td>पूर्णांक और कमरा नंबर</td></tr>
+  </table>
+  <div class="info-box">🕐 <strong>Automatic Reminder:</strong> हर दिन सुबह 8 बजे, अगले दिन की परीक्षा का reminder WhatsApp पर automatically जाता है।</div>
+</div>
+
+<div class="page page-break role-admin">
+  <h3>3.10 WhatsApp Setup</h3>
+  <p><strong>Menu → WhatsApp Setup</strong> — यह पहले करें, इसके बिना कोई message नहीं जाएगा।</p>
+
+  <h4>पहली बार Connect करना</h4>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-content"><strong>Connect WhatsApp</strong> button दबाएं</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-content">10-15 seconds रुकें — QR Code दिखेगा</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-content">अपने phone में WhatsApp खोलें → तीन dots (⋮) → <strong>Linked Devices</strong> → <strong>Link a Device</strong></div></div>
+    <div class="step"><div class="step-num">4</div><div class="step-content">Camera से screen का QR Code scan करें</div></div>
+    <div class="step"><div class="step-num">5</div><div class="step-content">Status: <strong>Connected ✓</strong> दिखेगा</div></div>
+  </div>
+  <div class="success-box">✅ एक बार connect होने के बाद session save रहता है — server restart पर दोबारा scan नहीं करना।</div>
+
+  <h4>Broadcast — सभी को एक साथ Message</h4>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-content">Broadcast Message section में message लिखें</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-content">चुनें: ✅ Parents / ✅ Teachers / ✅ Students</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-content"><strong>Send Broadcast</strong> button दबाएं</div></div>
+  </div>
+
+  <h3>3.11 Gallery — गैलरी</h3>
+  <p><strong>Menu → Gallery → Upload Photo</strong> — Event का नाम और फोटो चुनें → Upload करें।</p>
+</div>
+
+<!-- ═══════════════ SECTION 4 — TEACHER ═══════════════ -->
+<div class="page page-break role-teacher">
+  <div class="section-header">
+    <div class="section-num">अध्याय 4</div>
+    <h2>👨‍🏫 Teacher Guide</h2>
+  </div>
+  <p>Teacher को <strong>अपनी assigned class</strong> की जानकारी मिलती है।</p>
+
+  <h3>Attendance लगाना</h3>
+  <p><strong>Menu → Attendance</strong></p>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-content">अपनी <strong>Class</strong> और <strong>Section</strong> चुनें</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-content">Date चुनें</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-content">हर छात्र को Present / Absent / Late mark करें</div></div>
+    <div class="step"><div class="step-num">4</div><div class="step-content"><strong>Save Attendance</strong> दबाएं</div></div>
+  </div>
+
+  <h3>Result डालना</h3>
+  <p><strong>Menu → Results → Add Result</strong> → अपनी class का छात्र चुनें → marks भरें → Save।</p>
+
+  <h3>Timetable देखना</h3>
+  <p><strong>Menu → Timetable</strong> — Class और Section चुनें → पूरे हफ्ते का schedule दिखेगा।<br>Teacher सिर्फ <strong>देख</strong> सकता है, बदल नहीं सकता।</p>
+
+  <h3>Exam Schedule देखना</h3>
+  <p><strong>Menu → Exam Schedule</strong> — अपनी class की upcoming परीक्षाओं की list दिखेगी।</p>
+</div>
+
+<!-- ═══════════════ SECTION 5 — STUDENT ═══════════════ -->
+<div class="page page-break role-student">
+  <div class="section-header">
+    <div class="section-num">अध्याय 5</div>
+    <h2>🎓 Student Guide</h2>
+  </div>
+  <p>Student केवल <strong>अपनी जानकारी</strong> देख सकता है।</p>
+
+  <table>
+    <tr><th>Menu</th><th>क्या दिखेगा</th></tr>
+    <tr><td><strong>Attendance</strong></td><td>Date-wise present/absent/late record + percentage</td></tr>
+    <tr><td><strong>Fees</strong></td><td>सभी fees की list, status (Paid/Unpaid), due date</td></tr>
+    <tr><td><strong>Results</strong></td><td>सभी exam results, marks, grade, percentage</td></tr>
+    <tr><td><strong>Timetable</strong></td><td>Weekly schedule — आज का दिन highlight होगा</td></tr>
+    <tr><td><strong>Exams</strong></td><td>Upcoming exams + countdown "In 3 days", "Tomorrow!"</td></tr>
+  </table>
+
+  <div class="warning-box">⚠️ Student केवल fees <strong>देख</strong> सकता है — payment Admin करता है।</div>
+</div>
+
+<!-- ═══════════════ SECTION 6 — PARENT ═══════════════ -->
+<div class="page page-break role-parent">
+  <div class="section-header">
+    <div class="section-num">अध्याय 6</div>
+    <h2>👨‍👩‍👧 Parent Guide</h2>
+  </div>
+  <p>Parent अपने <strong>बच्चे की जानकारी</strong> देख सकता है।</p>
+
+  <table>
+    <tr><th>Menu</th><th>क्या दिखेगा</th></tr>
+    <tr><td><strong>Dashboard</strong></td><td>बच्चे का नाम, class, attendance, fees status</td></tr>
+    <tr><td><strong>Timetable</strong></td><td>बच्चे की class का weekly schedule, आज highlighted</td></tr>
+    <tr><td><strong>Exams</strong></td><td>Upcoming exams with countdown, subject, time, room</td></tr>
+  </table>
+
+  <h3>WhatsApp Notifications (Parents के लिए)</h3>
+  <p>अगर Parent Phone सही डला है, तो automatic messages आएंगे:</p>
+
+  <div class="wa-message">Dear Parent, आपका बच्चा Rahul Kumar (Class 10-A) आज absent है।<br>— Bright Future School</div>
+
+  <div class="wa-message">✅ Fee Receipt — RCP000001<br><br>Student: Rahul Kumar (10-A)<br>Fee Type: Tuition<br>Paid: Rs.5,000 | Method: CASH<br>Status: PAID<br><br>Thank you! — Bright Future School</div>
+
+  <div class="wa-message">📚 Exam Reminder — Class 10<br><br>Subject: Mathematics<br>Date: 27-May-2026 | Time: 10:00 AM<br>Duration: 3 hours | Max Marks: 100<br>Room: Hall 1<br><br>Best of luck! 🌟</div>
+</div>
+
+<!-- ═══════════════ SECTION 7 — PASSWORD ═══════════════ -->
+<div class="page page-break">
+  <div class="section-header">
+    <div class="section-num">अध्याय 7</div>
+    <h2>🔐 Password बदलना</h2>
+  </div>
+
+  <h3>Password कैसे बदलें</h3>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-content">Top-right में नाम पर click करें → <strong>Change Password</strong></div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-content">Current Password, New Password (min 8 अक्षर), Confirm Password भरें</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-content"><strong>Update Password</strong> button दबाएं → दोबारा login करें</div></div>
+  </div>
+
+  <h3>Admin Password भूल जाएं तो</h3>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-content">Login page पर <strong>"Forgot Admin Password?"</strong> link click करें</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-content"><strong>Recovery Secret</strong> डालें (system setup के समय set किया था)</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-content">Temporary password मिलेगा — login करें और तुरंत बदलें</div></div>
+  </div>
+</div>
+
+<!-- ═══════════════ SECTION 8 — WHATSAPP ═══════════════ -->
+<div class="page page-break">
+  <div class="section-header">
+    <div class="section-num">अध्याय 8</div>
+    <h2>📱 WhatsApp Notifications</h2>
+  </div>
+
+  <table>
+    <tr><th>Event</th><th>किसे</th><th>कब</th></tr>
+    <tr><td>Student Absent</td><td>Parent</td><td>Attendance save होने पर तुरंत</td></tr>
+    <tr><td>Fee Payment</td><td>Parent</td><td>Payment mark होने पर तुरंत</td></tr>
+    <tr><td>Exam Reminder</td><td>Parent / Student</td><td>परीक्षा से 1 दिन पहले सुबह 8 बजे</td></tr>
+    <tr><td>Notice Broadcast</td><td>Selected audience</td><td>Admin notice post करने पर</td></tr>
+  </table>
+
+  <h3>WhatsApp काम न करे तो</h3>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-content"><strong>Admin → WhatsApp Setup</strong> खोलें — Status देखें</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-content"><strong>Not Connected</strong> हो → "Connect WhatsApp" → QR scan करें</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-content">QR न दिखे → Page Refresh (F5) → 15 seconds रुकें</div></div>
+    <div class="step"><div class="step-num">4</div><div class="step-content">Failed messages हों → <strong>Retry Failed</strong> button दबाएं</div></div>
+  </div>
+</div>
+
+<!-- ═══════════════ SECTION 9 — TROUBLESHOOTING ═══════════════ -->
+<div class="page page-break">
+  <div class="section-header">
+    <div class="section-num">अध्याय 9</div>
+    <h2>🔧 सामान्य समस्याएं और समाधान</h2>
+  </div>
+
+  <h3>❌ Login नहीं हो रहा</h3>
+  <table>
+    <tr><th>समस्या</th><th>समाधान</th></tr>
+    <tr><td>Email गलत है</td><td>Admin से सही email पूछें</td></tr>
+    <tr><td>Password गलत है</td><td>Admin से password reset करवाएं</td></tr>
+    <tr><td>Account inactive है</td><td>Admin से account activate करवाएं</td></tr>
+    <tr><td>Browser cache issue</td><td>Incognito / Private mode में try करें</td></tr>
+  </table>
+
+  <h3>❌ WhatsApp Messages नहीं आ रहे</h3>
+  <div class="error-box">
+    1. Student record में Parent Phone सही डला हो — सिर्फ 10 अंक (जैसे 9876543210)<br>
+    2. Admin → WhatsApp Setup → Status "Connected ✓" होना चाहिए<br>
+    3. देश का code (91) नहीं डालना — system खुद लगाता है
+  </div>
+
+  <h3>❌ Fee Receipt / ID Card Download नहीं हो रही</h3>
+  <div class="error-box">
+    Browser में Popup Blocker बंद करें → Settings → Allow popups for this site
+  </div>
+
+  <h3>❌ Timetable नहीं दिख रहा</h3>
+  <div class="error-box">
+    Admin ने उस class का timetable बनाया होगा तभी दिखेगा।<br>
+    Admin → Timetable → Class select करें → timetable बनाएं।
+  </div>
+
+  <h3>❌ Page नहीं खुल रहा</h3>
+  <div class="error-box">
+    1. Internet connection check करें<br>
+    2. Server IP सही है या नहीं देखें<br>
+    3. Browser cache clear करें (Ctrl + Shift + Delete)
+  </div>
+
+  <h3>❌ Password भूल गए</h3>
+  <div class="error-box">
+    Student / Teacher / Parent → Admin से reset करवाएं<br>
+    Admin → Login page पर Recovery Secret use करें
+  </div>
+</div>
+
+<!-- ═══════════════ SECTION 10 — QUICK REF ═══════════════ -->
+<div class="page page-break">
+  <div class="section-header">
+    <div class="section-num">अध्याय 10</div>
+    <h2>⚡ Quick Reference Card</h2>
+  </div>
+
+  <div class="quick-ref">
+    <h3>Admin — रोज़ के काम</h3>
+    <div class="qr-item"><span class="qr-check">✅</span><span>सुबह — Dashboard check करें, stats देखें</span></div>
+    <div class="qr-item"><span class="qr-check">✅</span><span>Attendance → Class/Section चुनकर हाजिरी लगाएं</span></div>
+    <div class="qr-item"><span class="qr-check">✅</span><span>हफ्ते में — Fees → payments record करें</span></div>
+    <div class="qr-item"><span class="qr-check">✅</span><span>हफ्ते में — Notices → नई notice post करें</span></div>
+    <div class="qr-item"><span class="qr-check">✅</span><span>महीने में — Results → exam marks डालें</span></div>
+    <div class="qr-item"><span class="qr-check">✅</span><span>महीने में — बकाया fees की list check करें</span></div>
+  </div>
+
+  <div class="quick-ref" style="margin-top:16px; background: #065f46;">
+    <h3>WhatsApp — ज़रूरी बातें</h3>
+    <div class="qr-item"><span class="qr-check">✅</span><span>WhatsApp Setup → "Connected ✓" हमेशा होना चाहिए</span></div>
+    <div class="qr-item"><span class="qr-check">✅</span><span>हर Student के record में Parent Phone ज़रूर डालें</span></div>
+    <div class="qr-item"><span class="qr-check">✅</span><span>Disconnect हो जाए → QR दोबारा scan करें</span></div>
+    <div class="qr-item"><span class="qr-check">✅</span><span>Failed messages → Retry Failed button दबाएं</span></div>
+  </div>
+
+  <h3 style="margin-top: 24px;">सभी Roles — Login URL</h3>
+  <table>
+    <tr><th>Role</th><th>Login करने के बाद जाएं</th></tr>
+    <tr><td>Admin</td><td><code>/admin/dashboard.html</code></td></tr>
+    <tr><td>Teacher</td><td><code>/teacher/dashboard.html</code></td></tr>
+    <tr><td>Student</td><td><code>/student/dashboard.html</code></td></tr>
+    <tr><td>Parent</td><td><code>/parent/dashboard.html</code></td></tr>
+  </table>
+
+  <div class="footer">
+    स्कूल मैनेजमेंट सिस्टम — यूज़र गाइड v1.0 &nbsp;|&nbsp; May 2026 &nbsp;|&nbsp; Bright Future School
+  </div>
+</div>
+
+</body>
+</html>
