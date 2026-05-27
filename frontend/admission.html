@@ -107,12 +107,41 @@
     © 2024 Bright Future School. <a href="index.html" class="text-blue-400 hover:text-blue-300">Back to Home</a>
   </footer>
 
+  <script src="js/api.js"></script>
   <script src="js/auth.js?v=10"></script>
   <script>
-    function submitEnquiry(e) {
+    async function submitEnquiry(e) {
       e.preventDefault();
-      showToast('Thank you! We will contact you within 24 hours.', 'success');
-      e.target.reset();
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Submitting...';
+      try {
+        await api.post('/admissions', {
+          studentName: document.getElementById('a-student').value,
+          dob:         document.getElementById('a-dob').value,
+          applyingClass: document.getElementById('a-class').value,
+          parentName:  document.getElementById('a-parent').value,
+          phone:       document.getElementById('a-phone').value,
+          email:       document.getElementById('a-email').value,
+          currentSchool: document.getElementById('a-school').value,
+          message:     document.getElementById('a-message').value
+        });
+        document.getElementById('enquiryForm').style.display = 'none';
+        document.getElementById('successBox').style.display = 'block';
+      } catch (err) {
+        showToast(err.message || 'Something went wrong. Please try again.', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Submit Enquiry';
+      }
+    }
+
+    function resetForm() {
+      document.getElementById('enquiryForm').reset();
+      document.getElementById('enquiryForm').style.display = 'block';
+      document.getElementById('successBox').style.display = 'none';
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Submit Enquiry';
     }
   </script>
 </body>
